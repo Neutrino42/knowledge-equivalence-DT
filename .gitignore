@@ -1,0 +1,7 @@
+/output
+/result
+trace
+/__pycache__
+/.idea
+
+*.csv

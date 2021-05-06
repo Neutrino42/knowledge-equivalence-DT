@@ -1,0 +1,15 @@
+{
+  "timestamp": "10",
+  "camID": "cam1",
+  "camPosition": [2,2],
+  "objects": [
+    {"objID": "obja", "objPosition": [3,3], "isImportant": true},
+    {"objID": "objb", "objPosition": [4,4], "isImportant": false}
+  ],
+  "commGraph": [
+    {"camID": "cam2", "strength": 3},
+    {"camID": "cam3", "strength": 4},
+    {"camID": "cam4", "strength": 2},
+    {"camID": "cam5", "strength": 1}
+  ]
+}
