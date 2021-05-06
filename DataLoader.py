@@ -379,9 +379,19 @@ def local_goal_distance(state_chunk_p, state_chunk_r):
 
 def compare_simple(time_list_p: list, state_list_p: list, time_list_r: list, state_list_r: list):
     p_list, r_list, time_list, _, _, _, _ = get_common_parts(time_list_p, state_list_p, time_list_r, state_list_r)
-
     distances = [simple_distance(p, r) for p, r in zip(p_list, r_list)]
+    return distances, time_list
 
+
+def compare_interaction(time_list_p: list, state_list_p: list, time_list_r: list, state_list_r: list):
+    p_list, r_list, time_list, _, _, _, _ = get_common_parts(time_list_p, state_list_p, time_list_r, state_list_r)
+    distances = [interaction_distance(p, r) for p, r in zip(p_list, r_list)]
+    return distances, time_list
+
+
+def compare_global_goal(time_list_p: list, knowledge_list_p: list, time_list_r: list, knowledge_list_r: list):
+    p_list, r_list, time_list, _, _, _, _ = get_common_parts(time_list_p, knowledge_list_p, time_list_r, knowledge_list_r)
+    distances = [knowledge_distance(p, r) for p, r in zip(p_list, r_list)]
     return distances, time_list
 
 
@@ -454,30 +464,6 @@ def get_common_parts(time_steps_1, list_1, time_steps_2, list_2):
     return list_1_trim, list_2_trim, time_steps_trim, start_index_1, end_index_1, start_index_2, end_index_2
 
 
-def compare_interaction(time_list_p: list, state_list_p: list, time_list_r: list, state_list_r: list):
-    p_list, r_list, time_list, _, _, _, _ = get_common_parts(time_list_p, state_list_p, time_list_r, state_list_r)
-
-    distances = [interaction_distance(p, r) for p, r in zip(p_list, r_list)]
-
-    return distances, time_list
-
-
-def compare_knowledge(time_list_p: list, knowledge_list_p: list, time_list_r: list, knowledge_list_r: list):
-    """
-
-    :param time_list_p:
-    :param knowledge_list_p:
-    :param time_list_r:
-    :param knowledge_list_r:
-    :return:
-    """
-    p_list, r_list, time_list, _, _, _, _ = get_common_parts(time_list_p, knowledge_list_p, time_list_r, knowledge_list_r)
-
-    distances = [knowledge_distance(p, r) for p, r in zip(p_list, r_list)]
-
-    return distances, time_list
-
-
 def my_test():
     k = 2  # k for k-coverage
 
@@ -509,8 +495,8 @@ def my_test():
     dists_inter, time_list_inter = compare_interaction(time_pre_list, traces_pre, time_real_list, traces_real)
 
     # compare global knowledge trace with prediction
-    dists_knowledge, time_list_knowledge = compare_knowledge(time_pre_list, knowledge_pre_list, time_real_list,
-                                                             knowledge_real_list)
+    dists_knowledge, time_list_knowledge = compare_global_goal(time_pre_list, knowledge_pre_list, time_real_list,
+                                                               knowledge_real_list)
 
     # compare local goals
     dists_local_goals, time_local_goals = compare_local_goals(10, time_pre_list, traces_pre, time_real_list,
@@ -556,8 +542,8 @@ def eval_base_line(k, trace_real_path, xml_file_path, trace_pre_path):
     dists_inter, time_list_inter = compare_interaction(time_pre_list, traces_pre, time_real_list, traces_real)
 
     # compare global knowledge trace with prediction
-    dists_knowledge, time_list_knowledge = compare_knowledge(time_pre_list, knowledge_pre_list, time_real_list,
-                                                             knowledge_real_list)
+    dists_knowledge, time_list_knowledge = compare_global_goal(time_pre_list, knowledge_pre_list, time_real_list,
+                                                               knowledge_real_list)
 
     # compare local goals
     dists_local_goals, time_local_goals = compare_local_goals(10, time_pre_list, traces_pre, time_real_list,
@@ -652,7 +638,7 @@ def main():
         # ------------------
         # compare prediction, get the distance
         dists_simple, time_list_slice = compare_simple(time_pre_list, traces_pre, time_real_list, traces_real)
-        dists_knowledge, _ = compare_knowledge(time_pre_list, knowledge_pre_list, time_real_list, knowledge_real_list)
+        dists_knowledge, _ = compare_global_goal(time_pre_list, knowledge_pre_list, time_real_list, knowledge_real_list)
         dists_interaction, _ = compare_interaction(time_pre_list, traces_pre, time_real_list, traces_real)
         dists_lg, _ = compare_local_goals(10, time_pre_list, traces_pre, time_real_list, traces_real)
 
@@ -669,7 +655,6 @@ def main():
         if deviation_time is None:
             deviation_time = final_end_time
             deviation_index = time_list_slice.index(deviation_time)
-
 
         # get the real state at this deviation time step
         state = traces_real[int(deviation_time - 1)]
