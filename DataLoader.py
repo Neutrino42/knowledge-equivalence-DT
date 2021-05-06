@@ -425,43 +425,33 @@ def compare_local_goals(window, time_list_p, state_list_p, time_list_r, state_li
     return distances, time_list
 
 
-def test(time_list_1, state_list_1, time_list_2, state_list_2):
+def get_common_parts(time_steps_1, list_1, time_steps_2, list_2):
     """
     find the common part of the two lists
     sequence 1: [ x x x x x x x x x x x]
     sequence 2:      [ x x x x x x x x x ]
     sequence 2:      [ x x x x ]
 
-    :param time_list_1: time steps of sequence 1, e.g. [3,4,5,6,7,...]
-    :param state_list_1: value of each corresponding time step in time_list_1
-    :param time_list_2: time steps of sequence 2, e.g. [7,8,9,10,...]
-    :param state_list_2: value of each corresponding time step in time_list_2
+    :param time_steps_1: time steps of sequence 1, e.g. [3,4,5,6,7,...]
+    :param list_1: value of each corresponding time step in time_list_1
+    :param time_steps_2: time steps of sequence 2, e.g. [7,8,9,10,...]
+    :param list_2: value of each corresponding time step in time_list_2
     :return: common part of the two lists, and the overlapping time list
     """
 
-    start_time = max(time_list_1[0], time_list_2[0])
-    end_time = min(time_list_1[-1], time_list_2[-1])
+    start_time = max(time_steps_1[0], time_steps_2[0])
+    end_time = min(time_steps_1[-1], time_steps_2[-1])
 
+    start_index_1 = time_steps_1.index(start_time)
+    start_index_2 = time_steps_2.index(start_time)
+    end_index_1 = time_steps_1.index(end_time)
+    end_index_2 = time_steps_2.index(end_time)
 
+    list_1_trim = list_1[start_index_1: end_index_1 + 1]
+    list_2_trim = list_2[start_index_2: end_index_2 + 1]
+    time_steps_trim = time_steps_2[start_index_2: end_index_2 + 1]
 
-def get_common_parts(time_list_p, state_list_p, time_list_r, state_list_r):
-    start_time = time_list_p[0]
-    start_index_r = time_list_r.index(start_time)
-    start_index_p = 0
-    # real: [ x x x x x x x x x x x]
-    # predict:      [ x x x x x x x x x ]
-    # predict:      [ x x x x ]
-    # find the common part of the two lists
-    if len(time_list_p) > len(time_list_r) - start_index_r:
-        end_index_r = len(time_list_r) - 1
-        end_index_p = time_list_p.index(time_list_r[end_index_r])
-    else:
-        end_index_p = len(time_list_p) - 1
-        end_index_r = time_list_r.index(time_list_p[end_index_p])
-    p_list = state_list_p[start_index_p: end_index_p + 1]
-    r_list = state_list_r[start_index_r: end_index_r + 1]
-    time_list = time_list_p[start_index_p: end_index_p + 1]
-    return p_list, r_list, time_list, start_index_p, end_index_p, start_index_r, end_index_r
+    return list_1_trim, list_2_trim, time_steps_trim, start_index_1, end_index_1, start_index_2, end_index_2
 
 
 def compare_interaction(time_list_p: list, state_list_p: list, time_list_r: list, state_list_r: list):
