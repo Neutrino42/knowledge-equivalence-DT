@@ -1,3 +1,4 @@
+import os
 import xml.etree.ElementTree as ET
 from collections import Counter
 from xml.dom import minidom
@@ -337,7 +338,9 @@ def simple_distance(state_p, state_r):  # p for predicted and r for real
     return np.linalg.norm(p_array - r_array)
 
 
-def knowledge_distance(knowledge_1, knowledge_2):
+def knowledge_distance(k, state_1, state_2):
+    knowledge_1 = calc_k_coverage_value(k, state_1)
+    knowledge_2 = calc_k_coverage_value(k, state_2)
     return np.linalg.norm(np.array(knowledge_1) - np.array(knowledge_2))
 
 
@@ -389,9 +392,9 @@ def compare_interaction(time_list_p: list, state_list_p: list, time_list_r: list
     return distances, time_list
 
 
-def compare_global_goal(time_list_p: list, knowledge_list_p: list, time_list_r: list, knowledge_list_r: list):
-    p_list, r_list, time_list, _, _, _, _ = get_common_parts(time_list_p, knowledge_list_p, time_list_r, knowledge_list_r)
-    distances = [knowledge_distance(p, r) for p, r in zip(p_list, r_list)]
+def compare_global_goal(k: int, time_list_p: list, state_list_p: list, time_list_r: list, state_list_r: list):
+    p_list, r_list, time_list, _, _, _, _ = get_common_parts(time_list_p, state_list_p, time_list_r, state_list_r)
+    distances = [knowledge_distance(k, p, r) for p, r in zip(p_list, r_list)]
     return distances, time_list
 
 
@@ -435,7 +438,7 @@ def compare_local_goals(window, time_list_p, state_list_p, time_list_r, state_li
     return distances, time_list
 
 
-def get_common_parts(time_steps_1, list_1, time_steps_2, list_2):
+def get_common_parts(time_steps_1: list, list_1: list, time_steps_2: list, list_2: list):
     """
     find the common part of the two lists
     sequence 1: [ x x x x x x x x x x x]
@@ -443,9 +446,9 @@ def get_common_parts(time_steps_1, list_1, time_steps_2, list_2):
     sequence 2:      [ x x x x ]
 
     :param time_steps_1: time steps of sequence 1, e.g. [3,4,5,6,7,...]
-    :param list_1: value of each corresponding time step in time_list_1
+    :param list_1: value of each corresponding time step in time_steps_1
     :param time_steps_2: time steps of sequence 2, e.g. [7,8,9,10,...]
-    :param list_2: value of each corresponding time step in time_list_2
+    :param list_2: value of each corresponding time step in time_steps_2
     :return: common part of the two lists, and the overlapping time list
     """
 
@@ -559,6 +562,22 @@ def modify_repast_params(file, name, value):
     tree.write(file, encoding='utf-8', xml_declaration=True)
 
 
+def find_deviation_time(time_list, dists_list, theta_baseline, final_end_time):
+    # find the time when there is deviation
+    deviation_time = None
+    deviation_index = None
+    for i in range(len(dists_list)):
+        if dists_list[i] > theta_baseline:
+            deviation_time = time_list[i]  # the value is a float
+            deviation_index = i
+            break
+    assert time_list[-1] >= final_end_time
+    if deviation_time is None:
+        deviation_time = final_end_time
+        deviation_index = time_list.index(deviation_time)
+    return deviation_index, deviation_time
+
+
 def main():
     k = 2  # k for k-coverage
     seed = 3333
@@ -580,9 +599,8 @@ def main():
     traces_real = read_trace(trace_real_path)
     export_XML_init_file(traces_real[0], xml_file_path)
 
-    # read real trace and calculate k-coverage for each time step
+    # read real trace
     time_real_list = [state["time"] for state in traces_real]
-    knowledge_real_list = [calc_k_coverage_value(k, state) for state in traces_real]
 
     # initialize the simulation runner
     repast_jar_path = "/Users/Nann/eclipse-workspace/mobileCameras/runnable_jar/mobileCameras.jar"
@@ -628,7 +646,6 @@ def main():
         # ------------------
         traces_pre = read_trace(trace_pre_path)  # [{}, {}, {} ...]
         time_pre_list = [state["time"] for state in traces_pre]
-        knowledge_pre_list = [calc_k_coverage_value(k, state) for state in traces_pre]
 
         # DEBUG: ensure two traces has the same number of objects
         assert get_num_objs(traces_pre[0]) == get_num_objs(traces_real[0])
@@ -637,24 +654,14 @@ def main():
         # baseline comparison
         # ------------------
         # compare prediction, get the distance
-        dists_simple, time_list_slice = compare_simple(time_pre_list, traces_pre, time_real_list, traces_real)
-        dists_knowledge, _ = compare_global_goal(time_pre_list, knowledge_pre_list, time_real_list, knowledge_real_list)
+        dists_simple, time_list = compare_simple(time_pre_list, traces_pre, time_real_list, traces_real)
+        dists_knowledge, _ = compare_global_goal(k, time_pre_list, traces_pre, time_real_list, traces_real)
         dists_interaction, _ = compare_interaction(time_pre_list, traces_pre, time_real_list, traces_real)
         dists_lg, _ = compare_local_goals(10, time_pre_list, traces_pre, time_real_list, traces_real)
 
-        # find the time when there is deviation
-        deviation_time = None
-        deviation_index = None
-        for i in range(len(dists_simple)):
-            if dists_simple[i] > theta_baseline:
-                deviation_time = time_list_slice[i]  # the value is a float
-                deviation_index = i
-                break
-
-        assert time_list_slice[-1] >= final_end_time
-        if deviation_time is None:
-            deviation_time = final_end_time
-            deviation_index = time_list_slice.index(deviation_time)
+        # find the deviation time step
+        deviation_index, deviation_time = find_deviation_time(time_list, dists_simple, theta_baseline,
+                                                              final_end_time)
 
         # get the real state at this deviation time step
         state = traces_real[int(deviation_time - 1)]
@@ -668,32 +675,36 @@ def main():
             export_XML_init_file(state, xml_file_path)
 
         # write distances to file
-        export_array = np.vstack([time_list_slice, dists_simple]).transpose()
-        np.savetxt("./result/distances_raw{}_{}.csv".format(seed, int(deviation_time)),
+        os.makedirs("./result/baseline", exist_ok=True)
+        export_array = np.vstack([time_list, dists_simple]).transpose()
+        np.savetxt("./result/baseline/distances_raw{}_{}.csv".format(seed, int(deviation_time)),
                    export_array, delimiter=',', fmt='%d, %f')
-        np.savetxt("./result/distances_sliced{}_{}.csv".format(seed, int(deviation_time)),
+        np.savetxt("./result/baseline/distances_sliced{}_{}.csv".format(seed, int(deviation_time)),
                    export_array[:deviation_index, :], delimiter=',', fmt='%d, %f')
 
-        export_knowledge_array = np.vstack([time_list_slice, dists_knowledge]).transpose()
-        np.savetxt("./result/distances_knowledge_raw{}_{}.csv".format(seed, int(deviation_time)),
+        os.makedirs("./result/global_goal", exist_ok=True)
+        export_knowledge_array = np.vstack([time_list, dists_knowledge]).transpose()
+        np.savetxt("./result/global_goal/distances_knowledge_raw{}_{}.csv".format(seed, int(deviation_time)),
                    export_knowledge_array, delimiter=',', fmt='%d, %f')
-        np.savetxt("./result/distances_knowledge_sliced{}_{}.csv".format(seed, int(deviation_time)),
+        np.savetxt("./result/global_goal/distances_knowledge_sliced{}_{}.csv".format(seed, int(deviation_time)),
                    export_knowledge_array[:deviation_index, :], delimiter=',', fmt='%d, %f')
 
-        export_interaction_array = np.vstack([time_list_slice, dists_interaction]).transpose()
-        np.savetxt("./result/distances_interaction_raw{}_{}.csv".format(seed, int(deviation_time)),
+        os.makedirs("./result/interaction", exist_ok=True)
+        export_interaction_array = np.vstack([time_list, dists_interaction]).transpose()
+        np.savetxt("./result/interaction/distances_interaction_raw{}_{}.csv".format(seed, int(deviation_time)),
                    export_interaction_array, delimiter=',', fmt='%d, %f')
-        np.savetxt("./result/distances_interaction_sliced{}_{}.csv".format(seed, int(deviation_time)),
+        np.savetxt("./result/interaction/distances_interaction_sliced{}_{}.csv".format(seed, int(deviation_time)),
                    export_interaction_array[:deviation_index, :], delimiter=',', fmt='%d, %f')
 
-        export_lg_array = np.vstack([time_list_slice, dists_lg]).transpose()
-        np.savetxt("./result/distances_lg_raw{}_{}.csv".format(seed, int(deviation_time)),
+        os.makedirs("./result/local_goals", exist_ok=True)
+        export_lg_array = np.vstack([time_list, dists_lg]).transpose()
+        np.savetxt("./result/local_goals/distances_lg_raw{}_{}.csv".format(seed, int(deviation_time)),
                    export_lg_array, delimiter=',', fmt='%d, %f')
-        np.savetxt("./result/distances_lg_sliced{}_{}.csv".format(seed, int(deviation_time)),
+        np.savetxt("./result/local_goals/distances_lg_sliced{}_{}.csv".format(seed, int(deviation_time)),
                    export_lg_array[:deviation_index, :], delimiter=',', fmt='%d, %f')
 
         # record history for plotting
-        time_list_archive += time_list_slice[:deviation_index]
+        time_list_archive += time_list[:deviation_index]
         dists_list_archive += dists_simple[:deviation_index]
         dists_knowledge_list_archive += dists_knowledge[:deviation_index]
         dists_interaction_list_archive += dists_interaction[:deviation_index]
