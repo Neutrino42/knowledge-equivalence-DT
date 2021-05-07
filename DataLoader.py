@@ -586,10 +586,12 @@ def main():
     final_end_time = 1000
 
     repast_param_file = "/Users/Nann/eclipse-workspace/mobileCameras/mobileCameras.rs/parameters.xml"
+    compare_method = "baseline"
 
     base_dir = "/Users/Nann/eclipse-workspace/mobileCameras/trace/"
     trace_real_file = "sample{}.txt".format(seed)
     xml_file = 'init_scenario{}_0.xml'.format(seed)
+    result_dir = "./result/seed{}/compare_{}".format(seed, compare_method)
 
     trace_real_path = base_dir + trace_real_file
     xml_file_path = base_dir + xml_file
@@ -675,33 +677,33 @@ def main():
             export_XML_init_file(state, xml_file_path)
 
         # write distances to file
-        os.makedirs("./result/baseline", exist_ok=True)
+        os.makedirs(result_dir + "/baseline", exist_ok=True)
         export_array = np.vstack([time_list, dists_simple]).transpose()
-        np.savetxt("./result/baseline/distances_raw{}_{}.csv".format(seed, int(deviation_time)),
-                   export_array, delimiter=',', fmt='%d, %f')
-        np.savetxt("./result/baseline/distances_sliced{}_{}.csv".format(seed, int(deviation_time)),
-                   export_array[:deviation_index, :], delimiter=',', fmt='%d, %f')
+        np.savetxt(result_dir + "/baseline/distances_raw{}_{}.csv".format(seed, int(deviation_time)),
+                   export_array, delimiter=',', fmt='%d,%f')
+        np.savetxt(result_dir + "/baseline/distances_sliced{}_{}.csv".format(seed, int(deviation_time)),
+                   export_array[:deviation_index, :], delimiter=',', fmt='%d,%f')
 
-        os.makedirs("./result/global_goal", exist_ok=True)
+        os.makedirs(result_dir + "/global_goal", exist_ok=True)
         export_knowledge_array = np.vstack([time_list, dists_knowledge]).transpose()
-        np.savetxt("./result/global_goal/distances_knowledge_raw{}_{}.csv".format(seed, int(deviation_time)),
-                   export_knowledge_array, delimiter=',', fmt='%d, %f')
-        np.savetxt("./result/global_goal/distances_knowledge_sliced{}_{}.csv".format(seed, int(deviation_time)),
-                   export_knowledge_array[:deviation_index, :], delimiter=',', fmt='%d, %f')
+        np.savetxt(result_dir + "/global_goal/distances_knowledge_raw{}_{}.csv".format(seed, int(deviation_time)),
+                   export_knowledge_array, delimiter=',', fmt='%d,%f')
+        np.savetxt(result_dir + "/global_goal/distances_knowledge_sliced{}_{}.csv".format(seed, int(deviation_time)),
+                   export_knowledge_array[:deviation_index, :], delimiter=',', fmt='%d,%f')
 
-        os.makedirs("./result/interaction", exist_ok=True)
+        os.makedirs(result_dir + "/interaction", exist_ok=True)
         export_interaction_array = np.vstack([time_list, dists_interaction]).transpose()
-        np.savetxt("./result/interaction/distances_interaction_raw{}_{}.csv".format(seed, int(deviation_time)),
-                   export_interaction_array, delimiter=',', fmt='%d, %f')
-        np.savetxt("./result/interaction/distances_interaction_sliced{}_{}.csv".format(seed, int(deviation_time)),
-                   export_interaction_array[:deviation_index, :], delimiter=',', fmt='%d, %f')
+        np.savetxt(result_dir + "/interaction/distances_interaction_raw{}_{}.csv".format(seed, int(deviation_time)),
+                   export_interaction_array, delimiter=',', fmt='%d,%f')
+        np.savetxt(result_dir + "/interaction/distances_interaction_sliced{}_{}.csv".format(seed, int(deviation_time)),
+                   export_interaction_array[:deviation_index, :], delimiter=',', fmt='%d,%f')
 
-        os.makedirs("./result/local_goals", exist_ok=True)
+        os.makedirs(result_dir + "/local_goals", exist_ok=True)
         export_lg_array = np.vstack([time_list, dists_lg]).transpose()
-        np.savetxt("./result/local_goals/distances_lg_raw{}_{}.csv".format(seed, int(deviation_time)),
-                   export_lg_array, delimiter=',', fmt='%d, %f')
-        np.savetxt("./result/local_goals/distances_lg_sliced{}_{}.csv".format(seed, int(deviation_time)),
-                   export_lg_array[:deviation_index, :], delimiter=',', fmt='%d, %f')
+        np.savetxt(result_dir + "/local_goals/distances_lg_raw{}_{}.csv".format(seed, int(deviation_time)),
+                   export_lg_array, delimiter=',', fmt='%d,%f')
+        np.savetxt(result_dir + "/local_goals/distances_lg_sliced{}_{}.csv".format(seed, int(deviation_time)),
+                   export_lg_array[:deviation_index, :], delimiter=',', fmt='%d,%f')
 
         # record history for plotting
         time_list_archive += time_list[:deviation_index]
@@ -715,28 +717,36 @@ def main():
 
     plt.plot(np.array(time_list_archive), np.array(dists_list_archive))
     plt.title("baseline")
-    plt.savefig("./result/distance_plots{}.pdf".format(seed))
+    plt.savefig(result_dir + "/distance_plots{}.pdf".format(seed))
     plt.show()
 
     plt.plot(np.array(time_list_archive), np.array(dists_knowledge_list_archive))
     plt.title("global knowledge")
-    plt.savefig("./result/distance_knowledge_plots{}.pdf".format(seed))
+    plt.savefig(result_dir + "/distance_knowledge_plots{}.pdf".format(seed))
     plt.show()
 
     plt.plot(np.array(time_list_archive), np.array(dists_interaction_list_archive))
     plt.title("interaction")
-    plt.savefig("./result/distance_interaction_plots{}.pdf".format(seed))
+    plt.savefig(result_dir + "/distance_interaction_plots{}.pdf".format(seed))
     plt.show()
 
     plt.plot(np.array(time_list_archive), np.array(dists_lg_list_archive))
     plt.title("local goals")
-    plt.savefig("./result/distance_lg_plots{}.pdf".format(seed))
+    plt.savefig(result_dir + "/distance_lg_plots{}.pdf".format(seed))
     plt.show()
 
     # write deviation record to file
-    dev_file = './result/deviation_record{}.csv'.format(seed)
+    dev_file = result_dir + '/deviation_record{}.csv'.format(seed)
     with open(dev_file, 'w+') as f:
         f.write(','.join(map(str, record)) + '\n')
+
+    all_archive = np.vstack([time_list_archive,
+                             dists_list_archive,
+                             dists_knowledge_list_archive,
+                             dists_interaction_list_archive,
+                             dists_lg_list_archive]).transpose()
+    np.savetxt(result_dir + "/all_distances_{}.csv".format(seed), all_archive,
+               delimiter=',', fmt='%d,%f,%f,%f,%f', header="time,baseline,global_goal,interaction,local_goals")
 
 
 if __name__ == '__main__':
