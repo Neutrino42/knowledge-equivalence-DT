@@ -304,24 +304,7 @@ def get_all_covered_objects(state):
 
 
 def simple_distance(state_p, state_r):  # p for predicted and r for real
-    # get all objects
     # store only the value [x,y] in the array, discarding id
-    objs_r = get_all_covered_objects(state_r)
-    sorted_objs_r = sorted(objs_r.items())
-    objs_r_array = np.array([item[1] for item in sorted_objs_r])
-    ids_r = [item[0] for item in sorted_objs_r]
-
-    # find the covered real object ids in prediction trace
-    objs_p = get_all_covered_objects(state_p)
-    objs_p_array = []
-    for i in ids_r:
-        if objs_p.get(i):
-            objs_p_array.append(objs_p.get(i))
-        else:
-            uncov_obj_p = state_p["objects"].get(i)
-            assert uncov_obj_p is not None
-            objs_p_array.append([uncov_obj_p["x"], uncov_obj_p["y"]])
-    objs_p_array = np.array(objs_p_array)
 
     # read all cameras
     cams_r_array = []
@@ -333,8 +316,30 @@ def simple_distance(state_p, state_r):  # p for predicted and r for real
     cams_p_array = np.array(cams_p_array)
     cams_r_array = np.array(cams_r_array)
 
-    p_array = np.concatenate([objs_p_array, cams_p_array])
-    r_array = np.concatenate([objs_r_array, cams_r_array])
+    # get all objects
+    objs_r = get_all_covered_objects(state_r)
+    if len(objs_r) != 0:
+        sorted_objs_r = sorted(objs_r.items())
+        objs_r_array = np.array([item[1] for item in sorted_objs_r])
+        ids_r = [item[0] for item in sorted_objs_r]
+
+        # find the covered real object ids in prediction trace
+        objs_p = get_all_covered_objects(state_p)
+        objs_p_array = []
+        for i in ids_r:
+            if objs_p.get(i):
+                objs_p_array.append(objs_p.get(i))
+            else:
+                uncov_obj_p = state_p["objects"].get(i)
+                assert uncov_obj_p is not None
+                objs_p_array.append([uncov_obj_p["x"], uncov_obj_p["y"]])
+        objs_p_array = np.array(objs_p_array)
+
+        p_array = np.concatenate([objs_p_array, cams_p_array])
+        r_array = np.concatenate([objs_r_array, cams_r_array])
+    else:
+        p_array = cams_p_array
+        r_array = cams_r_array
     return np.linalg.norm(p_array - r_array)
 
 
@@ -412,7 +417,6 @@ def compare_local_goals(window, time_list_p, state_list_p, time_list_r, state_li
     """
     p_list, r_list, time_list, start_index_p, end_index_p, start_index_r, end_index_r = get_common_parts(
         time_list_p, state_list_p, time_list_r, state_list_r)
-    assert window <= len(time_list)
 
     # concat a head list
     head_list = state_list_r[:start_index_r]
@@ -421,8 +425,10 @@ def compare_local_goals(window, time_list_p, state_list_p, time_list_r, state_li
     augmented_r_list = head_list + r_list
     assert len(augmented_r_list) == len(state_list_r[: end_index_r + 1])
 
-    p_list_chunks = [augmented_p_list[max(0, i-window+1): i+1] for i in range(len(head_list), len(augmented_p_list))]
-    r_list_chunks = [augmented_r_list[max(0, i-window+1): i+1] for i in range(len(head_list), len(augmented_r_list))]
+    p_list_chunks = [augmented_p_list[max(0, i - window + 1): i + 1] for i in
+                     range(len(head_list), len(augmented_p_list))]
+    r_list_chunks = [augmented_r_list[max(0, i - window + 1): i + 1] for i in
+                     range(len(head_list), len(augmented_r_list))]
     assert len(p_list_chunks) == len(time_list)
     assert len(r_list_chunks) == len(time_list)
     assert p_list_chunks[0][-1] == state_list_p[start_index_p]
@@ -558,7 +564,7 @@ def modify_repast_params(file, name, value):
     root = tree.getroot()
     for param in root.findall('parameter'):
         if param.get('name') == name:
-            param.set('defaultValue', value)
+            param.set('defaultValue', str(value))
     tree.write(file, encoding='utf-8', xml_declaration=True)
 
 
@@ -578,38 +584,53 @@ def find_deviation_time(time_list, dists_list, theta_baseline, final_end_time):
     return deviation_index, deviation_time
 
 
-def main():
-    k = 2  # k for k-coverage
+def main(compare_method: str, theta, human_seed: int, verbose: bool, k):
+    """
+
+    :param compare_method:
+    :param theta:
+    :param human_seed:
+    :param verbose:
+    :param k: for k-coverage
+    :return:
+    """
     seed = 3333
-    theta_baseline = 40
     start_time = 0
     final_end_time = 1000
 
-    repast_param_file = "/Users/Nann/eclipse-workspace/mobileCameras/mobileCameras.rs/parameters.xml"
-    compare_method = "baseline"
+    result_dir = "./result/seed{}/compare_{}/threshold{}/human_seed{}/".format(seed, compare_method, theta, human_seed)
 
-    base_dir = "/Users/Nann/eclipse-workspace/mobileCameras/trace/"
-    trace_real_file = "sample{}.txt".format(seed)
-    xml_file = 'init_scenario{}_0.xml'.format(seed)
-    result_dir = "./result/seed{}/compare_{}".format(seed, compare_method)
+    repast_dir = "/Users/Nann/eclipse-workspace/mobileCameras/"
+    repast_param_path = repast_dir + "mobileCameras.rs/parameters.xml"
+    repast_jar_path = repast_dir + "runnable_jar/mobileCameras.jar"
 
-    trace_real_path = base_dir + trace_real_file
-    xml_file_path = base_dir + xml_file
+    trace_real_dir = repast_dir + "trace/"
+    trace_real_file = "sample{}_999.txt".format(seed)
+    trace_real_path = trace_real_dir + trace_real_file
+
+    # Export path for xml init file
+    xml_file = 'init_scenario{}_{}_0.xml'.format(seed, human_seed)
+    trace_pre_dir = trace_real_dir + 'prediction/seed{}/compare_{}/threshold{}/human_seed{}/'.format(
+        seed, compare_method, theta, human_seed)
+    xml_path = trace_pre_dir + xml_file
 
     # Assume we already have a real trace, but no prediction trace
     # At first, generate init XML file for simulator to make prediction
     traces_real = read_trace(trace_real_path)
-    export_XML_init_file(traces_real[0], xml_file_path)
+    export_XML_init_file(traces_real[0], xml_path)
+
+    # global_goal_list = [calc_k_coverage_value(k, state) for state in traces_real]
+    # plt.plot(global_goal_list)
+    # plt.show()
 
     # read real trace
     time_real_list = [state["time"] for state in traces_real]
 
     # initialize the simulation runner
-    repast_jar_path = "/Users/Nann/eclipse-workspace/mobileCameras/runnable_jar/mobileCameras.jar"
     runner = SimRunner(repast_jar_path)
 
     # record for deviation time step
-    record = []
+    deviation_record = []
 
     time_list_archive = []
     dists_list_archive = []
@@ -618,28 +639,17 @@ def main():
     dists_lg_list_archive = []
 
     while start_time < final_end_time:
-        xml_file = 'init_scenario{}_{}.xml'.format(seed, start_time)
-        trace_pre_file = 'prediction/sample{}_{}.txt'.format(seed, start_time)
+        # set input xml path, output trace_pre path
+        xml_file = 'init_scenario{}_{}_{}.xml'.format(seed, human_seed, start_time)
+        trace_pre_file = 'sample{}_{}_{}.txt'.format(seed, human_seed, start_time)
 
-        xml_file_path = base_dir + xml_file
-        trace_pre_path = base_dir + trace_pre_file
+        xml_path = trace_pre_dir + xml_file
+        trace_pre_path = trace_pre_dir + trace_pre_file
 
         # modify the init settings of Repast
-        modify_repast_params(repast_param_file, 'init_scenario_path', xml_file_path)
-        modify_repast_params(repast_param_file, 'output_trace_path', trace_pre_path)
-
-        # ---------------
-        # load XML to simulator
-        # ---------------
-        # prompt = ("Last simulation ends at: {}\n"
-        #          "Please modify Repast parameters.xml as follows first, then press any key to continue: \n"
-        #          "a. change xml init path to:                   {}\n"
-        #          "b. change prediction output file to:          {}\n"
-        #          "c. change scheduling time tick starting from: {}\n"
-        #          "d. change seeding in Repast GUI as:           {}\n"
-        #          "e. run simulation\n"
-        #          ).format(start_time, xml_file, trace_pre_file, start_time, seed)
-        # input(prompt)
+        modify_repast_params(repast_param_path, 'init_scenario_path', xml_path)
+        modify_repast_params(repast_param_path, 'output_trace_path', trace_pre_path)
+        modify_repast_params(repast_param_path, 'user_seed', human_seed)
 
         runner.run()
 
@@ -662,8 +672,20 @@ def main():
         dists_lg, _ = compare_local_goals(10, time_pre_list, traces_pre, time_real_list, traces_real)
 
         # find the deviation time step
-        deviation_index, deviation_time = find_deviation_time(time_list, dists_simple, theta_baseline,
-                                                              final_end_time)
+        if compare_method == "baseline":
+            deviation_index, deviation_time = find_deviation_time(time_list, dists_simple, theta,
+                                                                  final_end_time)
+        elif compare_method == "interaction":
+            deviation_index, deviation_time = find_deviation_time(time_list, dists_interaction, theta,
+                                                                  final_end_time)
+        elif compare_method == "local_goals":
+            deviation_index, deviation_time = find_deviation_time(time_list, dists_lg, theta,
+                                                                  final_end_time)
+        elif compare_method == "global_goals":
+            deviation_index, deviation_time = find_deviation_time(time_list, dists_knowledge, theta,
+                                                                  final_end_time)
+        else:
+            exit(-1)
 
         # get the real state at this deviation time step
         state = traces_real[int(deviation_time - 1)]
@@ -672,37 +694,37 @@ def main():
         # export state at this time to XML file
         export_XML = True
         if export_XML:
-            xml_file = 'init_scenario{}_{}.xml'.format(seed, int(deviation_time))
-            xml_file_path = base_dir + xml_file
-            export_XML_init_file(state, xml_file_path)
+            xml_file = 'init_scenario{}_{}_{}.xml'.format(seed, human_seed, int(deviation_time))
+            xml_path = trace_pre_dir + xml_file
+            export_XML_init_file(state, xml_path)
 
         # write distances to file
-        os.makedirs(result_dir + "/baseline", exist_ok=True)
+        os.makedirs(result_dir + "baseline", exist_ok=True)
         export_array = np.vstack([time_list, dists_simple]).transpose()
-        np.savetxt(result_dir + "/baseline/distances_raw{}_{}.csv".format(seed, int(deviation_time)),
+        np.savetxt(result_dir + "baseline/distances_raw{}_{}_{}.csv".format(seed, human_seed, int(deviation_time)),
                    export_array, delimiter=',', fmt='%d,%f')
-        np.savetxt(result_dir + "/baseline/distances_sliced{}_{}.csv".format(seed, int(deviation_time)),
+        np.savetxt(result_dir + "baseline/distances_sliced{}_{}_{}.csv".format(seed, human_seed, int(deviation_time)),
                    export_array[:deviation_index, :], delimiter=',', fmt='%d,%f')
 
-        os.makedirs(result_dir + "/global_goal", exist_ok=True)
+        os.makedirs(result_dir + "global_goal", exist_ok=True)
         export_knowledge_array = np.vstack([time_list, dists_knowledge]).transpose()
-        np.savetxt(result_dir + "/global_goal/distances_knowledge_raw{}_{}.csv".format(seed, int(deviation_time)),
+        np.savetxt(result_dir + "global_goal/distances_knowledge_raw{}_{}_{}.csv".format(seed, human_seed, int(deviation_time)),
                    export_knowledge_array, delimiter=',', fmt='%d,%f')
-        np.savetxt(result_dir + "/global_goal/distances_knowledge_sliced{}_{}.csv".format(seed, int(deviation_time)),
+        np.savetxt(result_dir + "global_goal/distances_knowledge_sliced{}_{}_{}.csv".format(seed, human_seed, int(deviation_time)),
                    export_knowledge_array[:deviation_index, :], delimiter=',', fmt='%d,%f')
 
-        os.makedirs(result_dir + "/interaction", exist_ok=True)
+        os.makedirs(result_dir + "interaction", exist_ok=True)
         export_interaction_array = np.vstack([time_list, dists_interaction]).transpose()
-        np.savetxt(result_dir + "/interaction/distances_interaction_raw{}_{}.csv".format(seed, int(deviation_time)),
+        np.savetxt(result_dir + "interaction/distances_interaction_raw{}_{}_{}.csv".format(seed, human_seed, int(deviation_time)),
                    export_interaction_array, delimiter=',', fmt='%d,%f')
-        np.savetxt(result_dir + "/interaction/distances_interaction_sliced{}_{}.csv".format(seed, int(deviation_time)),
+        np.savetxt(result_dir + "interaction/distances_interaction_sliced{}_{}_{}.csv".format(seed, human_seed, int(deviation_time)),
                    export_interaction_array[:deviation_index, :], delimiter=',', fmt='%d,%f')
 
-        os.makedirs(result_dir + "/local_goals", exist_ok=True)
+        os.makedirs(result_dir + "local_goals", exist_ok=True)
         export_lg_array = np.vstack([time_list, dists_lg]).transpose()
-        np.savetxt(result_dir + "/local_goals/distances_lg_raw{}_{}.csv".format(seed, int(deviation_time)),
+        np.savetxt(result_dir + "local_goals/distances_lg_raw{}_{}_{}.csv".format(seed, human_seed, int(deviation_time)),
                    export_lg_array, delimiter=',', fmt='%d,%f')
-        np.savetxt(result_dir + "/local_goals/distances_lg_sliced{}_{}.csv".format(seed, int(deviation_time)),
+        np.savetxt(result_dir + "local_goals/distances_lg_sliced{}_{}_{}.csv".format(seed, human_seed, int(deviation_time)),
                    export_lg_array[:deviation_index, :], delimiter=',', fmt='%d,%f')
 
         # record history for plotting
@@ -711,43 +733,57 @@ def main():
         dists_knowledge_list_archive += dists_knowledge[:deviation_index]
         dists_interaction_list_archive += dists_interaction[:deviation_index]
         dists_lg_list_archive += dists_lg[:deviation_index]
-        record.append(deviation_time)
+        deviation_record.append(deviation_time)
 
         start_time = deviation_time
 
     plt.plot(np.array(time_list_archive), np.array(dists_list_archive))
     plt.title("baseline")
-    plt.savefig(result_dir + "/distance_plots{}.pdf".format(seed))
-    plt.show()
+    plt.savefig(result_dir + "distance_plots{}_{}.pdf".format(seed, human_seed))
+    plt.close("all")
 
     plt.plot(np.array(time_list_archive), np.array(dists_knowledge_list_archive))
     plt.title("global knowledge")
-    plt.savefig(result_dir + "/distance_knowledge_plots{}.pdf".format(seed))
-    plt.show()
+    plt.savefig(result_dir + "distance_knowledge_plots{}_{}.pdf".format(seed, human_seed))
+    plt.close("all")
 
     plt.plot(np.array(time_list_archive), np.array(dists_interaction_list_archive))
     plt.title("interaction")
-    plt.savefig(result_dir + "/distance_interaction_plots{}.pdf".format(seed))
-    plt.show()
+    plt.savefig(result_dir + "distance_interaction_plots{}_{}.pdf".format(seed, human_seed))
+    plt.close("all")
 
     plt.plot(np.array(time_list_archive), np.array(dists_lg_list_archive))
     plt.title("local goals")
-    plt.savefig(result_dir + "/distance_lg_plots{}.pdf".format(seed))
-    plt.show()
+    plt.savefig(result_dir + "distance_lg_plots{}_{}.pdf".format(seed, human_seed))
+    plt.close("all")
 
     # write deviation record to file
-    dev_file = result_dir + '/deviation_record{}.csv'.format(seed)
+    dev_file = result_dir + 'deviation_record{}_{}.csv'.format(seed, human_seed)
     with open(dev_file, 'w+') as f:
-        f.write(','.join(map(str, record)) + '\n')
+        f.write(','.join(map(str, deviation_record)) + '\n')
 
     all_archive = np.vstack([time_list_archive,
                              dists_list_archive,
                              dists_knowledge_list_archive,
                              dists_interaction_list_archive,
                              dists_lg_list_archive]).transpose()
-    np.savetxt(result_dir + "/all_distances_{}.csv".format(seed), all_archive,
+    np.savetxt(result_dir + "all_distances_{}_{}.csv".format(seed, human_seed), all_archive,
                delimiter=',', fmt='%d,%f,%f,%f,%f', header="time,baseline,global_goal,interaction,local_goals")
 
 
 if __name__ == '__main__':
-    main()
+    compare_method_list = ["baseline", "interaction", "local_goals", "global_goals"]
+    compare_method = compare_method_list[0]
+    theta_list = dict(baseline=20,
+                      interaction=20,
+                      local_goals=1.1,
+                      global_goal=0.4)
+    theta = theta_list[compare_method]
+    human_seed = None  # real trace is obtained by setting human_seed = 999
+    verbose = True
+    k = 2  # k for k-coverage
+
+    for theta in [10000]:
+        for human_seed in range(100, 1001, 100):
+            print(compare_method, theta, human_seed)
+            main(compare_method, theta, human_seed, verbose, k)
