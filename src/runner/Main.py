@@ -22,6 +22,10 @@ def get_num_objs(state):
     return len(set(cov_objs))
 
 
+def get_num_cams(state):
+    return len(state["cameras"])
+
+
 def calc_k_coverage_value(k, state):
     num_objs = get_num_objs(state)
     return len(filter_k_coverage(k, state)) / float(num_objs)
@@ -310,15 +314,15 @@ def main(compare_method: str, theta, human_seed: int, verbose: bool, k, compare_
     traces_real = loader.read_trace(trace_real_path)
     loader.export_XML_init_file(traces_real[0], xml_path)
 
-    # global_goal_list = [calc_k_coverage_value(k, state) for state in traces_real]
-    # plt.plot(global_goal_list)
-    # plt.show()
-
     # read real trace
     time_real_list = [state["time"] for state in traces_real]
 
     # initialize the simulation runner
     runner = SimRunner(repast_jar_path, repast_dir)
+
+    # initialize simulator parameters
+    runner.modify_repast_params('human_count', get_num_objs(traces_real[0]))  # number of humans/objects
+    runner.modify_repast_params('camera_count', get_num_cams(traces_real[0]))  # number of cameras
 
     # record for deviation time step
     deviation_record = []
