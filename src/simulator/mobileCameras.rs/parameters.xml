@@ -5,5 +5,10 @@
 				<parameter name="init_scenario_path" displayName="Init Scenario File Path" type="java.lang.String" defaultValue="/Users/Nann/eclipse-workspace/mobileCameras/trace/prediction/seed3333/compare_interaction/threshold80/human_seed100/init_scenario3333_100_0.xml" isReadOnly="false" converter="repast.simphony.parameter.StringConverterFactory$StringStringConverter" />
 				<parameter name="human_count" displayName="Human Count" type="int" defaultValue="20" isReadOnly="false" converter="repast.simphony.parameter.StringConverterFactory$IntConverter" />
 				<parameter name="output_trace_path" displayName="Output Trace File Path" type="java.lang.String" defaultValue="/Users/Nann/eclipse-workspace/mobileCameras/trace/prediction/seed3333/compare_interaction/threshold80/human_seed100/sample3333_100_0.txt" isReadOnly="false" converter="repast.simphony.parameter.StringConverterFactory$StringStringConverter" />
+                <parameter name="update_knowledge" displayName="Update Knowledge from Init File?" type="boolean" 
+						defaultValue="false" 
+						isReadOnly="false" 
+						converter="repast.simphony.parameter.StringConverterFactory$BooleanConverter"
+											/>
 				<parameter name="user_seed" displayName="User Provided Seed for Human" type="int" defaultValue="100" isReadOnly="false" converter="repast.simphony.parameter.StringConverterFactory$IntConverter" />
 		</parameters>

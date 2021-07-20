@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='utf-8'?>
+<parameters>
+					<parameter converter="repast.simphony.parameter.StringConverterFactory$IntConverter" defaultValue="3333" displayName="Default Random Seed" isReadOnly="false" name="randomSeed" type="int" />
+				<parameter converter="repast.simphony.parameter.StringConverterFactory$IntConverter" defaultValue="5" displayName="Camera Count" isReadOnly="false" name="camera_count" type="int" />
+				<parameter converter="repast.simphony.parameter.StringConverterFactory$StringStringConverter" defaultValue="../simulator/trace/prediction/seed3333/compare_interaction/threshold10_2/human_seed666/init_scenario3333_666_979.xml" displayName="Init Scenario File Path" isReadOnly="false" name="init_scenario_path" type="java.lang.String" />
+				<parameter converter="repast.simphony.parameter.StringConverterFactory$IntConverter" defaultValue="10" displayName="Human Count" isReadOnly="false" name="human_count" type="int" />
+				<parameter converter="repast.simphony.parameter.StringConverterFactory$StringStringConverter" defaultValue="../simulator/trace/prediction/seed3333/compare_interaction/threshold10_2/human_seed666/sample3333_666_979.txt" displayName="Output Trace File Path" isReadOnly="false" name="output_trace_path" type="java.lang.String" />
+				<parameter converter="repast.simphony.parameter.StringConverterFactory$IntConverter" defaultValue="666" displayName="User Provided Seed for Human" isReadOnly="false" name="user_seed" type="int" />
+		</parameters>

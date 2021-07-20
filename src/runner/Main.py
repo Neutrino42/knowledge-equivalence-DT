@@ -430,7 +430,7 @@ if __name__ == '__main__':
     compare_method = compare_method_list[1]
     verbose = True
     k = 2  # k for k-coverage
-    tau = 1
+    tau = 0
 
     # parsing cli arguments
     argument_list = sys.argv[1:]
