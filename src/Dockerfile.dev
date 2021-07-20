@@ -1,0 +1,5 @@
+FROM nan42/eval:base
+
+COPY simulator ./experiments/simulator/
+
+WORKDIR ./experiments/runner/

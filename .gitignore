@@ -1,7 +1,11 @@
-/output
+/out
 /result
-trace
-/__pycache__
+/others
+__pycache__
 /.idea
+/evaluation_1
+/fig
 
+*.jar
+*.txt
 *.csv

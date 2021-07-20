@@ -14,7 +14,7 @@ class SimRunner(object):
 
     def run(self):
         assert os.path.exists(self.__path)
-        subprocess.run(["java", "-jar", self.__path, self.__repast_rs], timeout=20)
+        subprocess.run(["java", "-jar", self.__path, self.__repast_rs], timeout=60)
 
     def modify_repast_params(self, name, value):
         tree = ET.parse(self.__repast_param_path)

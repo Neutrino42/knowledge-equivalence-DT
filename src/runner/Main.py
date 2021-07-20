@@ -1,4 +1,6 @@
+import getopt
 import os
+import sys
 import xml.etree.ElementTree as ET
 from collections import Counter
 from xml.dom import minidom
@@ -197,7 +199,7 @@ def compare_local_goals(window, time_list_p, state_list_p, time_list_r, state_li
     return distances, time_list
 
 
-def compare_by(_compare_method, time_pre_list, traces_pre, time_real_list, traces_real, final_end_time, _theta, _k=2):
+def compare_by(_compare_method, time_pre_list, traces_pre, time_real_list, traces_real, final_end_time, _theta, _tau, _k=2):
     # find the deviation time step
     if _compare_method == "position":
         dists, time_list = compare_position(time_pre_list, traces_pre, time_real_list, traces_real)
@@ -210,7 +212,7 @@ def compare_by(_compare_method, time_pre_list, traces_pre, time_real_list, trace
     else:
         exit(-1)
 
-    deviation_index, deviation_time = find_deviation_time(time_list, dists, _theta, final_end_time)
+    deviation_index, deviation_time = find_deviation_time(time_list, dists, _theta, final_end_time, _tau)
 
     state = traces_real[int(deviation_time - 1)]
     assert state["time"] == deviation_time
@@ -231,7 +233,6 @@ def get_common_parts(time_steps_1: list, list_1: list, time_steps_2: list, list_
     :param list_2: value of each corresponding time step in time_steps_2
     :return: common part of the two lists, and the overlapping time list
     """
-
     start_time = max(time_steps_1[0], time_steps_2[0])
     end_time = min(time_steps_1[-1], time_steps_2[-1])
 
@@ -243,29 +244,40 @@ def get_common_parts(time_steps_1: list, list_1: list, time_steps_2: list, list_
     list_1_trim = list_1[start_index_1: end_index_1 + 1]
     list_2_trim = list_2[start_index_2: end_index_2 + 1]
     time_steps_trim = time_steps_2[start_index_2: end_index_2 + 1]
-
     return list_1_trim, list_2_trim, time_steps_trim, start_index_1, end_index_1, start_index_2, end_index_2
 
 
-def find_deviation_time(time_list, dists_list, theta_position, final_end_time):
+def find_deviation_time(time_list, dists_list, _theta, final_end_time, _tau):
     # find the time when there is deviation
     deviation_time = None
     deviation_index = None
+    assert (_tau >= 0)
+    count = 0
+
+    # regard it as a deviation only when distance has been larger than _theta for _tau CONSECUTIVE times
     for i in range(len(dists_list)):
-        if dists_list[i] > theta_position:
+        if dists_list[i] > _theta:
+            count += 1
+        else:
+            count = 0
+
+        # check _tau criteria
+        if count > _tau:
             deviation_time = time_list[i]  # the value is a float
             deviation_index = i
             break
-    assert time_list[-1] >= final_end_time
+
     if deviation_time is None:
         deviation_time = final_end_time
         deviation_index = time_list.index(deviation_time)
     return deviation_index, deviation_time
 
 
-def main(compare_method: str, theta, human_seed: int, verbose: bool, k):
+def main(compare_method: str, theta, human_seed: int, verbose: bool, k, compare_window, tau=0):
     """
 
+    :param tau:
+    :param compare_window:
     :param compare_method:
     :param theta:
     :param human_seed:
@@ -276,10 +288,9 @@ def main(compare_method: str, theta, human_seed: int, verbose: bool, k):
     seed = 3333
     start_time = 0
     final_end_time = 1000
+    result_dir = "./result/seed{}/compare_{}/threshold{}_{}/human_seed{}/".format(seed, compare_method, theta, tau, human_seed)
 
-    result_dir = "./result/seed{}/compare_{}/threshold{}/human_seed{}/".format(seed, compare_method, theta, human_seed)
-
-    repast_dir = "/Users/Nann/eclipse-workspace/mobileCameras/"
+    repast_dir = "../simulator/"
     repast_jar_path = repast_dir + "runnable_jar/mobileCameras.jar"
 
     trace_dir = repast_dir + "trace/"
@@ -288,8 +299,8 @@ def main(compare_method: str, theta, human_seed: int, verbose: bool, k):
 
     # Export path for xml init file
     xml_file = 'init_scenario{}_{}_0.xml'.format(seed, human_seed)
-    trace_pre_dir = trace_dir + 'prediction/seed{}/compare_{}/threshold{}/human_seed{}/'.format(
-        seed, compare_method, theta, human_seed)
+    trace_pre_dir = trace_dir + 'prediction/seed{}/compare_{}/threshold{}_{}/human_seed{}/'.format(
+        seed, compare_method, theta, tau, human_seed)
     xml_path = trace_pre_dir + xml_file
     os.makedirs(trace_pre_dir, exist_ok=True)
 
@@ -332,13 +343,14 @@ def main(compare_method: str, theta, human_seed: int, verbose: bool, k):
 
         # read prediction traces, and read real traces:
         traces_pre = loader.read_trace(trace_pre_path)  # [{}, {}, {} ...]
+        traces_pre = traces_pre[:compare_window]
         time_pre_list = [state["time"] for state in traces_pre]
         # DEBUG: ensure two traces has the same number of objects
         assert get_num_objs(traces_pre[0]) == get_num_objs(traces_real[0])
 
         # compare to find deviation time and state
         state, deviation_index, deviation_time = compare_by(compare_method, time_pre_list, traces_pre,
-                                                            time_real_list, traces_real, final_end_time, theta, k)
+                                                            time_real_list, traces_real, final_end_time, theta, tau, k)
 
         # export state at this time to XML file for the next round simulation
         xml_file = 'init_scenario{}_{}_{}.xml'.format(seed, human_seed, int(deviation_time))
@@ -410,17 +422,69 @@ def main(compare_method: str, theta, human_seed: int, verbose: bool, k):
 
 
 if __name__ == '__main__':
+    # default values
+    compare_window = 1000
+    theta_list = [80, 85, 70, 65, 60, 55, 50, 45, 40, 35, 30]
+    human_seed_list = list(range(100, 1001, 100))  # real trace is obtained by setting human_seed = 999
     compare_method_list = ["position", "interaction", "local_goals", "global_goals"]
-    theta_list = dict(position=20,
-                      interaction=20,
-                      local_goals=1.1,
-                      global_goal=0.4)
-    human_seed = None  # real trace is obtained by setting human_seed = 999
+    compare_method = compare_method_list[1]
     verbose = True
     k = 2  # k for k-coverage
-    compare_method = compare_method_list[1]
+    tau = 1
 
-    for theta in [80]:
-        for human_seed in range(100, 1001, 100):
-            print(compare_method, theta, human_seed)
-            main(compare_method, theta, human_seed, verbose, k)
+    # parsing cli arguments
+    argument_list = sys.argv[1:]
+    options = "t:a:s:c:w:h"
+    long_options = ["theta =", "tau =", "seed =", "compare =", "window =", "help"]
+    try:
+        arguments, values = getopt.getopt(argument_list, options, long_options)
+        if len(arguments) == 0:
+            print("error: please specify cli arguments, use -h to check help")
+            exit(-3)
+        for currentArgument, currentValue in arguments:
+            if currentArgument in ("-t", "--theta"):
+                currentValue.replace(" ", "")
+                theta_list = list(map(lambda v: int(v) if '.' not in v else float(v), currentValue.split(",")))
+
+            elif currentArgument in ("-a", "--tau"):
+                currentValue.replace(" ", "")
+                tau = int(currentValue)
+
+            elif currentArgument in ("-s", "--seed"):
+                currentValue.replace(" ", "")
+                human_seed_list = list(map(int, currentValue.split(",")))
+
+            elif currentArgument in ("-w", "--window"):
+                currentValue.replace(" ", "")
+                compare_window = int(currentValue)
+
+            elif currentArgument in ("-c", "--compare"):
+                compare_method = currentValue.strip()
+                if compare_method not in compare_method_list:
+                    print("error: compare method must be one of the following:")
+                    print(compare_method_list)
+                    exit(-2)
+            elif currentArgument in ("-h", "--help"):
+                print("Usage: python3 Main.py -t <threshold-list> -t <tau value> -s <seed-list> -c <compare-method> "
+                      "-w <compare-window>")
+                print("Example: python3 Main.py -t '30,40,50' -a 1 -s '100,200' -c position -w 100")
+                exit(-4)
+    except getopt.error as err:
+        print(str(err))
+        exit(-1)
+
+    print("threshold values:")
+    print(theta_list)
+    print("tau value:")
+    print(tau)
+    print("human seed values:")
+    print(human_seed_list)
+    print("compare by:")
+    print(compare_method)
+    print("compare window:")
+    print(compare_window)
+
+    for theta in theta_list:
+        for human_seed in human_seed_list:
+            print(compare_method, theta, human_seed, tau)
+            main(compare_method, theta, human_seed, verbose, k, compare_window, tau)
