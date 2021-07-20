@@ -5,6 +5,6 @@
 tag=${TAG}
 docker_image=${IMAGE}
 
-docker build -t ${docker_image}:${tag} -f src/Dockerfile ./src
+docker build --build-arg JAR_VERSION=${JAR_VERSION} -t ${docker_image}:${tag} -f src/Dockerfile ./src
 
 
