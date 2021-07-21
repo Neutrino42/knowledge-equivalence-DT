@@ -278,7 +278,8 @@ def find_deviation_time(time_list, dists_list, _theta, final_end_time, _tau):
     return deviation_index, deviation_time
 
 
-def main(compare_method: str, theta, human_seed: int, verbose: bool, k, compare_window, tau=0, update_state_only=False):
+def main(compare_method: str, theta, human_seed: int, verbose: bool, k, compare_window,
+         tau=0, update_state_only=False, estimation_uncertainty=0.0):
     """
 
     :param tau:
@@ -326,6 +327,8 @@ def main(compare_method: str, theta, human_seed: int, verbose: bool, k, compare_
     runner.modify_repast_params('human_count', get_num_objs(traces_real[0]))  # number of humans/objects
     runner.modify_repast_params('camera_count', get_num_cams(traces_real[0]))  # number of cameras
     runner.modify_repast_params('update_knowledge', str(not update_state_only).lower())  # whether to update knowledge
+    if estimation_uncertainty > 0:  # position uncertainty of human when estimating
+        runner.modify_repast_params('human_position_uncertainty', estimation_uncertainty)
 
     # record for deviation time step
     deviation_record = []
@@ -442,11 +445,12 @@ if __name__ == '__main__':
     # TODO: here it's a bit tricky to have this variable of "update_state_only" rather than "update_knowledge"
     # TODO: The reason is to be compatible with previous version of this file
     # TODO: future work can try to modify this variable in the simulator jar file
+    estimation_uncertainty = 0
 
     # parsing cli arguments
     argument_list = sys.argv[1:]
-    options = "t:a:s:c:w:uh"
-    long_options = ["theta =", "tau =", "seed =", "compare =", "window =", "update_state_only", "help"]
+    options = "t:a:s:c:w:e:uh"
+    long_options = ["theta =", "tau =", "seed =", "compare =", "window =", "estimation_uncertainty =", "update_state_only", "help"]
     try:
         arguments, values = getopt.getopt(argument_list, options, long_options)
         if len(arguments) == 0:
@@ -479,9 +483,13 @@ if __name__ == '__main__':
             elif currentArgument in ("-u", "--update_state_only"):
                 update_state_only = True
 
+            elif currentArgument in ("-e", "--estimation_uncertainty"):
+                currentValue.replace(" ", "")
+                estimation_uncertainty = float(currentValue)
+
             elif currentArgument in ("-h", "--help"):
                 print("Usage: python3 Main.py -t <threshold-list> -t <tau value> -s <seed-list> -c <compare-method> "
-                      "-w <compare-window>")
+                      "-w <compare-window> -e <estimation-uncertainty>")
                 print("Example: python3 Main.py -t '30,40,50' -a 1 -s '100,200' -c position -w 100")
                 exit(-4)
     except getopt.error as err:
@@ -502,5 +510,5 @@ if __name__ == '__main__':
     for theta in theta_list:
         for human_seed in human_seed_list:
             print(compare_method, theta, human_seed, tau)
-            main(compare_method, theta, human_seed, verbose, k, compare_window, tau=tau,
-                 update_state_only=update_state_only)
+            main(compare_method, theta, human_seed, verbose, k, compare_window,
+                 tau=tau, update_state_only=update_state_only, estimation_uncertainty=estimation_uncertainty)
