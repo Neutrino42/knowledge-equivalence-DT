@@ -203,7 +203,8 @@ def compare_local_goals(window, time_list_p, state_list_p, time_list_r, state_li
     return distances, time_list
 
 
-def compare_by(_compare_method, time_pre_list, traces_pre, time_real_list, traces_real, final_end_time, _theta, _tau, _k=2):
+def compare_by(_compare_method, time_pre_list, traces_pre, time_real_list, traces_real, final_end_time, _theta, _tau,
+               _k=2):
     # find the deviation time step
     if _compare_method == "position":
         dists, time_list = compare_position(time_pre_list, traces_pre, time_real_list, traces_real)
@@ -277,7 +278,7 @@ def find_deviation_time(time_list, dists_list, _theta, final_end_time, _tau):
     return deviation_index, deviation_time
 
 
-def main(compare_method: str, theta, human_seed: int, verbose: bool, k, compare_window, tau=0):
+def main(compare_method: str, theta, human_seed: int, verbose: bool, k, compare_window, tau=0, update_state_only=False):
     """
 
     :param tau:
@@ -292,7 +293,8 @@ def main(compare_method: str, theta, human_seed: int, verbose: bool, k, compare_
     seed = 3333
     start_time = 0
     final_end_time = 1000
-    result_dir = "./result/seed{}/compare_{}/threshold{}_{}/human_seed{}/".format(seed, compare_method, theta, tau, human_seed)
+    result_dir = "./result/seed{}/compare_{}/threshold{}_{}/human_seed{}/".format(seed, compare_method, theta, tau,
+                                                                                  human_seed)
 
     repast_dir = "../simulator/"
     repast_jar_path = repast_dir + "runnable_jar/mobileCameras.jar"
@@ -323,6 +325,7 @@ def main(compare_method: str, theta, human_seed: int, verbose: bool, k, compare_
     # initialize simulator parameters
     runner.modify_repast_params('human_count', get_num_objs(traces_real[0]))  # number of humans/objects
     runner.modify_repast_params('camera_count', get_num_cams(traces_real[0]))  # number of cameras
+    runner.modify_repast_params('update_knowledge', str(not update_state_only).lower())  # whether to update knowledge
 
     # record for deviation time step
     deviation_record = []
@@ -435,11 +438,15 @@ if __name__ == '__main__':
     verbose = True
     k = 2  # k for k-coverage
     tau = 0
+    update_state_only = False
+    # TODO: here it's a bit tricky to have this variable of "update_state_only" rather than "update_knowledge"
+    # TODO: The reason is to be compatible with previous version of this file
+    # TODO: future work can try to modify this variable in the simulator jar file
 
     # parsing cli arguments
     argument_list = sys.argv[1:]
-    options = "t:a:s:c:w:h"
-    long_options = ["theta =", "tau =", "seed =", "compare =", "window =", "help"]
+    options = "t:a:s:c:w:uh"
+    long_options = ["theta =", "tau =", "seed =", "compare =", "window =", "update_state_only", "help"]
     try:
         arguments, values = getopt.getopt(argument_list, options, long_options)
         if len(arguments) == 0:
@@ -468,6 +475,10 @@ if __name__ == '__main__':
                     print("error: compare method must be one of the following:")
                     print(compare_method_list)
                     exit(-2)
+
+            elif currentArgument in ("-u", "--update_state_only"):
+                update_state_only = True
+
             elif currentArgument in ("-h", "--help"):
                 print("Usage: python3 Main.py -t <threshold-list> -t <tau value> -s <seed-list> -c <compare-method> "
                       "-w <compare-window>")
@@ -491,4 +502,5 @@ if __name__ == '__main__':
     for theta in theta_list:
         for human_seed in human_seed_list:
             print(compare_method, theta, human_seed, tau)
-            main(compare_method, theta, human_seed, verbose, k, compare_window, tau)
+            main(compare_method, theta, human_seed, verbose, k, compare_window, tau=tau,
+                 update_state_only=update_state_only)
