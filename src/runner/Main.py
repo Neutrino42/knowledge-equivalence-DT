@@ -279,7 +279,7 @@ def find_deviation_time(time_list, dists_list, _theta, final_end_time, _tau):
 
 
 def main(compare_method: str, theta, human_seed: int, verbose: bool, k, compare_window,
-         tau=0, update_state_only=False, estimation_uncertainty=0.0):
+         tau=0, update_state_only=False, estimation_uncertainty=0.0, quiet_mode=False):
     """
 
     :param tau:
@@ -375,17 +375,18 @@ def main(compare_method: str, theta, human_seed: int, verbose: bool, k, compare_
 
         # write performance metrics (distances) to files
         os.makedirs(result_dir + "distances", exist_ok=True)
-        export_array = np.vstack([time_list,
-                                  dists_simple,
-                                  dists_knowledge,
-                                  dists_interaction,
-                                  dists_lg]).transpose()
-        np.savetxt(result_dir + "distances/distances_raw{}_{}_{}.csv".format(seed, human_seed, int(deviation_time)),
-                   export_array, delimiter=',', fmt='%d,%f,%f,%f,%f',
-                   header="time,position,global_goal,interaction,local_goals")
-        np.savetxt(result_dir + "distances/distances_sliced{}_{}_{}.csv".format(seed, human_seed, int(deviation_time)),
-                   export_array[:deviation_index, :], delimiter=',', fmt='%d,%f,%f,%f,%f',
-                   header="time,position,global_goal,interaction,local_goals")
+        if not quiet_mode:
+            export_array = np.vstack([time_list,
+                                      dists_simple,
+                                      dists_knowledge,
+                                      dists_interaction,
+                                      dists_lg]).transpose()
+            np.savetxt(result_dir + "distances/distances_raw{}_{}_{}.csv".format(seed, human_seed, int(deviation_time)),
+                       export_array, delimiter=',', fmt='%d,%f,%f,%f,%f',
+                       header="time,position,global_goal,interaction,local_goals")
+            np.savetxt(result_dir + "distances/distances_sliced{}_{}_{}.csv".format(seed, human_seed, int(deviation_time)),
+                       export_array[:deviation_index, :], delimiter=',', fmt='%d,%f,%f,%f,%f',
+                       header="time,position,global_goal,interaction,local_goals")
 
         # record history for plotting
         time_list_archive += time_list[:deviation_index]
@@ -446,11 +447,13 @@ if __name__ == '__main__':
     # TODO: The reason is to be compatible with previous version of this file
     # TODO: future work can try to modify this variable in the simulator jar file
     estimation_uncertainty = 0
+    quiet_mode = False  # reduce unnecessary output logs
 
     # parsing cli arguments
     argument_list = sys.argv[1:]
-    options = "t:a:s:c:w:e:uh"
-    long_options = ["theta =", "tau =", "seed =", "compare =", "window =", "estimation_uncertainty =", "update_state_only", "help"]
+    options = "t:a:s:c:w:e:uqh"
+    long_options = ["theta =", "tau =", "seed =", "compare =", "window =", "estimation_uncertainty =",
+                    "update_state_only", "quiet", "help"]
     try:
         arguments, values = getopt.getopt(argument_list, options, long_options)
         if len(arguments) == 0:
@@ -483,6 +486,9 @@ if __name__ == '__main__':
             elif currentArgument in ("-u", "--update_state_only"):
                 update_state_only = True
 
+            elif currentArgument in ("-q", "--quiet"):
+                quiet_mode = True
+
             elif currentArgument in ("-e", "--estimation_uncertainty"):
                 currentValue.replace(" ", "")
                 estimation_uncertainty = float(currentValue)
@@ -511,4 +517,5 @@ if __name__ == '__main__':
         for human_seed in human_seed_list:
             print(compare_method, theta, human_seed, tau)
             main(compare_method, theta, human_seed, verbose, k, compare_window,
-                 tau=tau, update_state_only=update_state_only, estimation_uncertainty=estimation_uncertainty)
+                 tau=tau, update_state_only=update_state_only, estimation_uncertainty=estimation_uncertainty,
+                 quiet_mode=quiet_mode)
