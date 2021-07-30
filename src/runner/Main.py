@@ -206,7 +206,7 @@ def compare_local_goals(window, time_list_p, state_list_p, time_list_r, state_li
 def compare_by(_compare_method, time_pre_list, traces_pre, time_real_list, traces_real, final_end_time, _theta, _tau,
                _k=2):
     # find the deviation time step
-    if _compare_method == "position":
+    if _compare_method == "position" or _compare_method == "position-p" or _compare_method == "position-k":
         dists, time_list = compare_position(time_pre_list, traces_pre, time_real_list, traces_real)
     elif _compare_method == "interaction":
         dists, time_list = compare_interaction(time_pre_list, traces_pre, time_real_list, traces_real)
@@ -437,7 +437,7 @@ if __name__ == '__main__':
     compare_window = 1000
     theta_list = [80, 85, 70, 65, 60, 55, 50, 45, 40, 35, 30]
     human_seed_list = list(range(100, 1001, 100))  # real trace is obtained by setting human_seed = 999
-    compare_method_list = ["position", "interaction", "local_goals", "global_goals"]
+    compare_method_list = ["position", "position-k", "position-p", "interaction", "local_goals", "global_goals"]
     compare_method = compare_method_list[1]
     verbose = True
     k = 2  # k for k-coverage
