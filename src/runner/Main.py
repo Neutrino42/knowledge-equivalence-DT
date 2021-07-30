@@ -279,7 +279,7 @@ def find_deviation_time(time_list, dists_list, _theta, final_end_time, _tau):
 
 
 def main(compare_method: str, theta, human_seed: int, verbose: bool, k, compare_window,
-         tau=0, update_state_only=False, estimation_uncertainty=0.0, quiet_mode=False):
+         tau=0, update_state_only=False, estimation_uncertainty=0.0, quiet_mode=False, simulation_time=1000):
     """
 
     :param tau:
@@ -293,7 +293,7 @@ def main(compare_method: str, theta, human_seed: int, verbose: bool, k, compare_
     """
     seed = 3333
     start_time = 0
-    final_end_time = 1000
+    final_end_time = simulation_time
     result_dir = "./result/seed{}/compare_{}/threshold{}_{}/human_seed{}/".format(seed, compare_method, theta, tau,
                                                                                   human_seed)
 
@@ -321,7 +321,7 @@ def main(compare_method: str, theta, human_seed: int, verbose: bool, k, compare_
     time_real_list = [state["time"] for state in traces_real]
 
     # initialize the simulation runner
-    runner = SimRunner(repast_jar_path, repast_dir)
+    runner = SimRunner(repast_jar_path, repast_dir, final_end_time)
 
     # initialize simulator parameters
     runner.modify_repast_params('human_count', get_num_objs(traces_real[0]))  # number of humans/objects
@@ -448,12 +448,13 @@ if __name__ == '__main__':
     # TODO: future work can try to modify this variable in the simulator jar file
     estimation_uncertainty = 0
     quiet_mode = False  # reduce unnecessary output logs
+    simulation_time = 1000
 
     # parsing cli arguments
     argument_list = sys.argv[1:]
-    options = "t:a:s:c:w:e:uqh"
+    options = "t:a:s:c:w:e:i:uqh"
     long_options = ["theta =", "tau =", "seed =", "compare =", "window =", "estimation_uncertainty =",
-                    "update_state_only", "quiet", "help"]
+                    "simulation_time","update_state_only", "quiet", "help"]
     try:
         arguments, values = getopt.getopt(argument_list, options, long_options)
         if len(arguments) == 0:
@@ -493,6 +494,10 @@ if __name__ == '__main__':
                 currentValue.replace(" ", "")
                 estimation_uncertainty = float(currentValue)
 
+            elif currentArgument in ("-i", "--simulation_time"):
+                currentValue.replace(" ", "")
+                simulation_time = int(currentValue)
+
             elif currentArgument in ("-h", "--help"):
                 print("Usage: python3 Main.py -t <threshold-list> -t <tau value> -s <seed-list> -c <compare-method> "
                       "-w <compare-window> -e <estimation-uncertainty>")
@@ -518,4 +523,4 @@ if __name__ == '__main__':
             print(compare_method, theta, human_seed, tau)
             main(compare_method, theta, human_seed, verbose, k, compare_window,
                  tau=tau, update_state_only=update_state_only, estimation_uncertainty=estimation_uncertainty,
-                 quiet_mode=quiet_mode)
+                 quiet_mode=quiet_mode, simulation_time=simulation_time)
