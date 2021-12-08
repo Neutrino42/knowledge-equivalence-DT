@@ -1,0 +1,8 @@
+version: "1.0"
+repast_jar_path: "../simulator/runnable_jar/mobileCameras_01105e.jar"
+repast_rs: "../simulator/mobileCameras_tmp.rs/"
+trace_real_path: "../simulator/traces_real/sample_20o-10c-3333-999.txt"
+init_scenario_path: "../simulator/traces_real/sample_20o-10c-3333-999.xml"
+out_scenario_dir: "../output/${{ time }}/scenario/"
+out_trace_dir: "../output/${{ time }}/trace/"
+out_statistics: "../output/${{ time }}/statistics/"

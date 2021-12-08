@@ -1,11 +1,35 @@
-import xml.etree.ElementTree as ET
-from xml.dom import minidom
+
+def get_all_covered_objects(state):
+    cov_objs = {}
+    for cam in state["cameras"].values():
+        for obj_id, obj_content in cam["objects"].items():
+            if cov_objs.get(str(obj_id)) is True:
+                assert cov_objs.get(str(obj_id)) == obj_content["x"], obj_content["y"]
+            else:
+                cov_objs[str(obj_id)] = [obj_content["x"], obj_content["y"]]
+    return cov_objs
 
 
-class Loader(object):
+def get_num_cams(state):
+    return len(state["cameras"])
 
-    def __init__(self, repast_dir):
-        self.__repast_dir = repast_dir
+
+def get_num_objs(state):
+    cov_objs = []
+    for cam in state["cameras"].values():
+        obj_list = cam["objects"]
+        cov_objs += obj_list
+    cov_objs += state["objects"].keys()
+    return len(set(cov_objs))
+
+
+class TraceLoader(object):
+
+    def __init__(self, trace_path):
+        self.__trace_path = trace_path
+
+    def set_trace_path(self, trace_path):
+        self.__trace_path = trace_path
 
     def _parse_state_for_each_timestep(self, trace):
         """
@@ -17,7 +41,7 @@ class Loader(object):
 
         time = trace["time"]
         camera_list = trace["cameras"]
-        # camera_list = ["{0|0.66|21.39},objs,2,{4|0.86|22.03|48|false|0},{2|4.00|25.00|90|true|2},msg,0",
+        # camera_list = ["{0|0.66|21.39},objs,2,{4|0.86|22.03|48|false|0},{2|4.00|25.00|90|true|2},msg,0,act,{n|6|8|f|9}",
         #               "{3|25.51|49.67},objs,1,{3|28.34|43.74|149|true|23},msg,2,{119.0|0|2},{120.0|0|2}"]
         edge_list = trace["graph"]
         # edge_list = ["{0|1|0.000778}",
@@ -38,7 +62,7 @@ class Loader(object):
             # Add this camera info
             cam_info = trace_item[0].split("|")
             cam_id = cam_info[0]
-            state["cameras"][cam_id] = dict(x=float(cam_info[1]), y=float(cam_info[2]), objects={}, messages=[])
+            state["cameras"][cam_id] = dict(x=float(cam_info[1]), y=float(cam_info[2]), objects={}, messages=[], actions={})
 
             # Add covered objects
             num_objs = int(trace_item[2])
@@ -50,18 +74,41 @@ class Loader(object):
                                                    is_important=obj_xml[4], duration=int(obj_xml[5]))
 
             # Add messages
-            num_msg = int(trace_item[4 + num_objs])
-            for i in range(-num_msg, 0):
-                msg_xml = trace_item[i].split("|")  # example: 119.0|0|2
+            index = trace_item.index("msg")
+            num_msg = int(trace_item[index + 1])
+            for i in range(num_msg):
+                msg_xml = trace_item[i + (index + 2)].split("|")  # example: 119.0|0|2
                 this_cam["messages"].append(
                     dict(time=float(msg_xml[0]), camera_id=int(msg_xml[1]), object_id=int(msg_xml[2])))
+
+            # Add actions
+            if "act" in trace_item:
+                index = trace_item.index("act")
+                notify = []
+                follow = -1
+                respond = -1
+                random = -1
+                action_info = trace_item[index + 1].split("|")
+                if action_info[0] == "n":
+                    index_f = action_info.index("f")
+                    notify = [int(j) for j in action_info[1:index_f]]
+                    follow = int(action_info[index_f+1])
+                elif action_info[0] == "f":
+                    follow = int(action_info[1])
+                elif action_info[0] == "re":
+                    respond = int(action_info[1])
+                    follow = int(action_info[2])
+                elif action_info[0] == "rand":
+                    random = 1
+                this_cam["actions"] = dict(notify=notify, follow=follow, respond=respond, random=random)
 
         # Load each graph edge
         for edge_trace in edge_list:
             edge_trace = edge_trace.replace("{", "")
             edge_trace = edge_trace.replace("}", "")
             edge_xml = edge_trace.split("|")  # example: 0|1|0.000778
-            state["graph"].append(dict(source_id=int(edge_xml[0]), target_id=int(edge_xml[1]), strength=float(edge_xml[2])))
+            state["graph"].append(
+                dict(source_id=int(edge_xml[0]), target_id=int(edge_xml[1]), strength=float(edge_xml[2])))
 
         # Load each uncovered objects
         for uncovered_obj_trace in uncovered_obj_list:
@@ -74,8 +121,8 @@ class Loader(object):
                                             duration=int(uncovered_obj_xml[5]))
         return state
 
-    def read_trace(self, trace_path):
-        tmp_traces = self._preprocess_trace(trace_path)
+    def read_trace(self):
+        tmp_traces = self._preprocess_trace(self.__trace_path)
         return [self._parse_state_for_each_timestep(_state) for _state in tmp_traces]
 
     def _preprocess_trace(self, file_path):
@@ -121,63 +168,3 @@ class Loader(object):
             traces.append(trace_item)
 
             return traces
-
-    def export_XML_init_file(self, state, out_file):
-        """
-        :param out_file:
-        :param state: {"time": 120.0, "cameras": "", "graph": "", "objs": ""}
-        :return:
-        """
-
-        time = state["time"]
-        camera_list = state["cameras"]
-        edge_list = state["graph"]
-        uncovered_obj_list = state["objects"]
-
-        # Init the structure of XML file
-        root_xml = ET.Element('scenario', {'time': str(time)})
-        cameras_xml = ET.SubElement(root_xml, 'cameras')
-        graph_xml = ET.SubElement(root_xml, 'graph')
-        uncovered_objects_xml = ET.SubElement(root_xml, 'uncovered_objects')
-
-        # Load XML with each camera and its objects + messages
-        for cam_id, cam_trace in camera_list.items():
-
-            # Add camera info to XML
-            cam_xml = ET.SubElement(cameras_xml, 'camera',
-                                    dict(id=cam_id, x=str(cam_trace["x"]), y=str(cam_trace["y"])))
-
-            # Add covered objects to XML
-            objs_xml = ET.SubElement(cam_xml, 'objects')
-            for obj_id, obj_trace in cam_trace["objects"].items():
-                ET.SubElement(objs_xml, 'object',
-                              dict(id=obj_id, x=str(obj_trace["x"]), y=str(obj_trace["y"]),
-                                   angle=str(obj_trace["angle"]),
-                                   is_important=obj_trace["is_important"]))
-            # Add messages to XML
-            msgs_xml = ET.SubElement(cam_xml, 'messages')
-            for msg_trace in cam_trace["messages"]:
-                ET.SubElement(msgs_xml, 'message',
-                              dict(time=str(int(msg_trace["time"])), camera_id=str(msg_trace["camera_id"]),
-                                   object_id=str(msg_trace["object_id"])))
-
-        # Load XML with each graph edge
-        for edge_trace in edge_list:
-            ET.SubElement(graph_xml, 'edge',
-                          dict(source_id=str(edge_trace["source_id"]), target_id=str(edge_trace["target_id"]),
-                               strength=str(edge_trace["strength"])))
-
-        # Load XML with each uncovered objects
-        for uncov_obj_id, uncovered_obj_trace in uncovered_obj_list.items():
-            ET.SubElement(uncovered_objects_xml, 'object',
-                          dict(id=uncov_obj_id, x=str(uncovered_obj_trace["x"]), y=str(uncovered_obj_trace["y"]),
-                               angle=str(uncovered_obj_trace["angle"]),
-                               is_important=uncovered_obj_trace["is_important"]))
-
-        # ET.dump(root_xml)
-
-        xmlstr = minidom.parseString(ET.tostring(root_xml, encoding='utf8')).toprettyxml(indent="    ")
-        with open(out_file, 'wb') as f:
-            f.write(xmlstr.encode('utf-8'))
-
-
