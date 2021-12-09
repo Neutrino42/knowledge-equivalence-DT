@@ -1,3 +1,5 @@
+import io
+
 
 def get_all_covered_objects(state):
     cov_objs = {}
@@ -62,7 +64,8 @@ class TraceLoader(object):
             # Add this camera info
             cam_info = trace_item[0].split("|")
             cam_id = cam_info[0]
-            state["cameras"][cam_id] = dict(x=float(cam_info[1]), y=float(cam_info[2]), objects={}, messages=[], actions={})
+            state["cameras"][cam_id] = dict(x=float(cam_info[1]), y=float(cam_info[2]), objects={}, messages=[],
+                                            actions={})
 
             # Add covered objects
             num_objs = int(trace_item[2])
@@ -92,7 +95,7 @@ class TraceLoader(object):
                 if action_info[0] == "n":
                     index_f = action_info.index("f")
                     notify = [int(j) for j in action_info[1:index_f]]
-                    follow = int(action_info[index_f+1])
+                    follow = int(action_info[index_f + 1])
                 elif action_info[0] == "f":
                     follow = int(action_info[1])
                 elif action_info[0] == "re":
@@ -121,50 +124,54 @@ class TraceLoader(object):
                                             duration=int(uncovered_obj_xml[5]))
         return state
 
-    def read_trace(self):
-        tmp_traces = self._preprocess_trace(self.__trace_path)
-        return [self._parse_state_for_each_timestep(_state) for _state in tmp_traces]
+    def read_trace(self, my_string=None):
+        if my_string is None:
+            with open(self.__trace_path, 'r') as f:
+                tmp_traces = self._preprocess_trace(f)
+                return [self._parse_state_for_each_timestep(_state) for _state in tmp_traces]
+        else:
+            tmp_traces = self._preprocess_trace(io.StringIO(my_string))
+            return [self._parse_state_for_each_timestep(_state) for _state in tmp_traces]
 
-    def _preprocess_trace(self, file_path):
-        with open(file_path, 'r') as f:
-            lines = f.readlines()
+    def _preprocess_trace(self, f):
+        lines = f.readlines()
 
-            start_time = lines[0].split(",")[0]
-            time = start_time
-            traces = []
-            camera_list = []
-            edge_list = []
-            uncovered_obj_list = []
-            for line in lines:
-                line = line.strip()
+        start_time = lines[0].split(",")[0]
+        time = start_time
+        traces = []
+        camera_list = []
+        edge_list = []
+        uncovered_obj_list = []
+        for line in lines:
+            line = line.strip()
 
-                if not line:
-                    # skip empty lines (this may only happen at the end of the file)
-                    continue
+            if not line:
+                # skip empty lines (this may only happen at the end of the file)
+                continue
 
-                line_items = line.split(",")
-                if line_items[0] != time:
-                    trace_item = {"time": int(float(time)),
-                                  "cameras": camera_list,
-                                  "graph": edge_list,
-                                  "objs": uncovered_obj_list}
-                    traces.append(trace_item)
-                    time = line_items[0]
-                    camera_list = []
-                    edge_list = []
-                    uncovered_obj_list = []
+            line_items = line.split(",")
+            if line_items[0] != time:
+                trace_item = {"time": int(float(time)),
+                              "cameras": camera_list,
+                              "graph": edge_list,
+                              "objs": uncovered_obj_list}
+                traces.append(trace_item)
+                time = line_items[0]
+                camera_list = []
+                edge_list = []
+                uncovered_obj_list = []
 
-                if line_items[1] == "cam":
-                    camera_list.append(line.split(",", 2)[-1])
-                elif line_items[1] == "graph":
-                    edge_list = line_items[2:]
-                elif line_items[1] == "objs":
-                    uncovered_obj_list = line_items[3:]
+            if line_items[1] == "cam":
+                camera_list.append(line.split(",", 2)[-1])
+            elif line_items[1] == "graph":
+                edge_list = line_items[2:]
+            elif line_items[1] == "objs":
+                uncovered_obj_list = line_items[3:]
 
-            trace_item = {"time": int(float(time)),
-                          "cameras": camera_list,
-                          "graph": edge_list,
-                          "objs": uncovered_obj_list}
-            traces.append(trace_item)
+        trace_item = {"time": int(float(time)),
+                      "cameras": camera_list,
+                      "graph": edge_list,
+                      "objs": uncovered_obj_list}
+        traces.append(trace_item)
 
-            return traces
+        return traces

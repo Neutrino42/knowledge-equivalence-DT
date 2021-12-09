@@ -1,5 +1,6 @@
 import numpy as np
 import Loader
+from collections import Counter
 
 
 class Comparator(object):
@@ -125,4 +126,29 @@ class Comparator(object):
         strengths_2 = [edge['strength'] for edge in graph_2]
         return np.linalg.norm(np.array(strengths_1) - np.array(strengths_2))
 
+    def calc_k_coverage_value(self, k, state):
+        num_objs = Loader.get_num_objs(state)
+        return len(self.filter_k_coverage(k, state)) / float(num_objs)
 
+    def filter_k_coverage(self, k, state):
+        assert k >= 0
+        coverage = self.calc_cov_for_objs(state)
+        return {key: v for key, v in coverage.items() if v >= k}
+
+    def calc_cov_for_objs(self, state):
+        """
+
+        :param state:
+        :return: a dict, indicating which object (id) has been covered by how many cameras
+        {'objID': coverage}
+        """
+        cov_objs = []
+        for cam in state["cameras"].values():
+            obj_list = cam["objects"]
+            cov_objs += obj_list
+        return dict(Counter(cov_objs))
+
+    def knowledge_distance(self, k, state_1, state_2):
+        knowledge_1 = self.calc_k_coverage_value(k, state_1)
+        knowledge_2 = self.calc_k_coverage_value(k, state_2)
+        return np.linalg.norm(np.array(knowledge_1) - np.array(knowledge_2))

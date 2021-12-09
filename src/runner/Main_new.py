@@ -1,7 +1,6 @@
 import getopt
 import os
 import sys
-from collections import Counter
 
 import numpy as np
 
@@ -11,48 +10,6 @@ from Comparator import Comparator
 from SimServer import SimServer
 import Util
 from Config import Config
-
-
-def calc_k_coverage_value(k, state):
-    num_objs = Loader.get_num_objs(state)
-    return len(filter_k_coverage(k, state)) / float(num_objs)
-
-
-def filter_k_coverage(k, state):
-    assert k >= 0
-    coverage = calc_cov_for_objs(state)
-    return {key: v for key, v in coverage.items() if v >= k}
-
-
-def calc_cov_for_objs(state):
-    """
-
-    :param state:
-    :return: a dict, indicating which object (id) has been covered by how many cameras
-    {'objID': coverage}
-    """
-    cov_objs = []
-    for cam in state["cameras"].values():
-        obj_list = cam["objects"]
-        cov_objs += obj_list
-    return dict(Counter(cov_objs))
-
-
-def get_all_covered_objects(state):
-    cov_objs = {}
-    for cam in state["cameras"].values():
-        for obj_id, obj_content in cam["objects"].items():
-            if cov_objs.get(str(obj_id)) is True:
-                assert cov_objs.get(str(obj_id)) == obj_content["x"], obj_content["y"]
-            else:
-                cov_objs[str(obj_id)] = [obj_content["x"], obj_content["y"]]
-    return cov_objs
-
-
-def knowledge_distance(k, state_1, state_2):
-    knowledge_1 = calc_k_coverage_value(k, state_1)
-    knowledge_2 = calc_k_coverage_value(k, state_2)
-    return np.linalg.norm(np.array(knowledge_1) - np.array(knowledge_2))
 
 
 def main(compare_method: str, theta, human_seed: int, compare_window,
@@ -69,8 +26,6 @@ def main(compare_method: str, theta, human_seed: int, compare_window,
     :return:
     """
     seed = 3333
-    start_time = 0
-    final_end_time = 1000
 
     # load configuration
     config = Config("config.yaml").data
@@ -111,13 +66,13 @@ def main(compare_method: str, theta, human_seed: int, compare_window,
 
     # record for deviation time step
     deviation_record = []
+    traces_pre = []
     try:
         sim_client.step()
-        # TODO: trace里第一秒是初始化，第二秒才开始sense-think-act-SEND_DATA，需要修改下面的代码
+        # TODO: 注意trace里第一秒是初始化，第二秒才开始sense-think-act-SEND_DATA
         for i in range(len(time_real_list)-1):
-
             # read prediction traces:
-            traces_pre = sim_client.get_traces()
+            traces_pre += sim_client.get_latest_trace()
 
             # compare to calculate deviation
             dists = comparator.compare(
@@ -144,6 +99,7 @@ def main(compare_method: str, theta, human_seed: int, compare_window,
         exit(-10)
 
     sim_client.terminate()
+    sim_client.export_all_traces(os.path.join(config["out_trace_dir"], "output_main.txt"))
     sim_client.update_params({"init_scenario_path": config["init_scenario_path"]})  # restore to default init_scenario
     sim_server.terminate()
 

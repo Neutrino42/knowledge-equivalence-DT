@@ -25,6 +25,7 @@ class Client(object):
                 # TODO: change to a more elegant way of connection checking
 
         self.__trace_loader = TraceLoader("")
+        self.trace_raw = ""
 
     def __load(self):
         try:
@@ -62,6 +63,7 @@ class Client(object):
                 if self.__runner.getModelActionCount() == 0:
                     self.__runner.setFinishing(True)
                 self.__runner.step()
+                self.trace_raw += self.__runner.getLatestTrace()
 
     def run_to(self, t):
         """
@@ -69,6 +71,7 @@ class Client(object):
         :param t: the time step that the simulation will proceed to.
         """
         self.__runner.runTo(float(t))
+        self.trace_raw += self.__runner.getLatestTrace()
 
     def terminate(self):
         self.__runner.stop()
@@ -97,3 +100,11 @@ class Client(object):
 
     def get_traces(self):
         return self.__trace_loader.read_trace()
+
+    def get_latest_trace(self):
+        return self.__trace_loader.read_trace(self.__runner.getLatestTrace())
+
+    def export_all_traces(self, path):
+        print(len(self.trace_raw))
+        with open(path, 'w') as f:
+            f.write(self.trace_raw)
