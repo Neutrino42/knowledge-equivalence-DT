@@ -1,4 +1,4 @@
-from py4j.java_gateway import JavaGateway
+from py4j.java_gateway import JavaGateway, GatewayParameters
 from py4j.protocol import Py4JJavaError
 import xml.etree.ElementTree as ET
 import os
@@ -7,19 +7,25 @@ import time
 
 
 class Client(object):
-    def __init__(self, rs_dir=None):
+    def __init__(self, rs_dir=None, port=None):
         """
         Constructor
         :param rs_dir: the .rs directory of the Repast model
+        :param port: the listening port of the simulator server
         """
+        self.__port = port
         if rs_dir is not None:
             self.__rs_dir = rs_dir
         else:
             self.__rs_dir = "/Users/Nann/eclipse-workspace/mobileCameras/mobileCameras.rs"
         for i in range(5):
             try:
-                self.__gateway = JavaGateway()
+                if self.__port is not None:
+                    self.__gateway = JavaGateway(gateway_parameters=GatewayParameters(port=self.__port))
+                else:
+                    self.__gateway = JavaGateway()
                 self.__runner = self.__gateway.entry_point.getRunner()
+                break
             except:
                 time.sleep(0.5)
                 # TODO: change to a more elegant way of connection checking
@@ -57,21 +63,22 @@ class Client(object):
         self.__load()
         self.__run_init()
 
-    def step(self, t=1):
-        for i in range(t):  # simulate t time steps
-            if self.__runner.getActionCount() > 0:
-                if self.__runner.getModelActionCount() == 0:
-                    self.__runner.setFinishing(True)
-                self.__runner.step()
-                self.trace_raw += self.__runner.getLatestTrace()
+    def step(self):
+        if self.__runner.getActionCount() > 0:
+            if self.__runner.getModelActionCount() == 0:
+                self.__runner.setFinishing(True)
+            self.__runner.step()
+            self.trace_raw += self.__runner.getLatestTrace()
 
-    def run_to(self, t):
+    def run_to(self, t, silence=False):
         """
         Simulate to a future time step. If t >= current time step, the simulation will not be executed.
+        :param silence: whether to collect traces
         :param t: the time step that the simulation will proceed to.
         """
         self.__runner.runTo(float(t))
-        self.trace_raw += self.__runner.getLatestTrace()
+        if not silence:
+            self.trace_raw += self.__runner.getLatestTrace()
 
     def terminate(self):
         self.__runner.stop()

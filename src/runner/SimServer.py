@@ -4,13 +4,17 @@ import os
 
 class SimServer(object):
 
-    def __init__(self, jar_path):
+    def __init__(self, jar_path, port=None):
         self.__jar_path = jar_path
         self.__process = None
+        self.__port = port
 
     def start(self):
         assert os.path.exists(self.__jar_path)
-        self.__process = subprocess.Popen(["java", "-jar", self.__jar_path])  # run in the background
+        if self.__port is None:
+            self.__process = subprocess.Popen(["java", "-jar", self.__jar_path])  # run in the background
+        else:
+            self.__process = subprocess.Popen(["java", "-jar", self.__jar_path, str(self.__port)])
 
     def terminate(self):
         if self.__process is not None:

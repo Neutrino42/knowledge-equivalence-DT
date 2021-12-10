@@ -23,6 +23,12 @@ class Comparator(object):
         if not isinstance(traces_real, list):
             traces_real = [traces_real]
 
+        # check input validity
+        time1 = [state["time"] for state in traces_pre]
+        time2 = [state["time"] for state in traces_real]
+        if time1 != time2:
+            raise Exception("ERROR: time of the two input traces not match!", time1, time2)
+
         distances = []
         if self.__method == "action":
             distances = self.__compare_action(traces_pre, traces_real)
@@ -63,21 +69,30 @@ class Comparator(object):
 
     def __action_deviation(self, action_1, action_2):
         if action_1["random"] == 1 and action_2["random"] == 1:
-            return 1
+            return 0
         elif action_1["respond"] != -1 and action_2["respond"] != -1:
-            d = 0.7
+            d = 0.4
             if action_1["respond"] == action_2["respond"]:
-                d += 0.15
+                d -= 0.2
             if action_1["follow"] == action_2["follow"]:
-                d += 0.15
+                d -= 0.2
             return d
         elif action_1["respond"] == -1 and action_2["respond"] == -1:
-            if action_1["follow"] == action_2["follow"]:
-                return 1
+            if len(action_1["notify"]) == 0 and len(action_2["notify"]) == 0:
+                if action_1["follow"] == action_2["follow"]:
+                    return 0
+                else:
+                    return 1
             else:
-                return 0
+                # 0.5 for notifying, 0.5 for following
+                common_elements = set(action_1["notify"]).intersection(set(action_2["notify"]))
+                d = 0.5 * (1 - float(len(common_elements)) / max(len((action_1["notify"])), len((action_2["notify"]))))
+                if action_1["follow"] == action_2["follow"]:
+                    return d
+                else:
+                    return d + 0.5
         else:
-            return 0
+            return 1
 
     def __position_deviation(self, state_p, state_r):  # p for predicted and r for real
         # store only the value [x,y] in the array, discarding id

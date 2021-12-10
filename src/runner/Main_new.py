@@ -89,7 +89,7 @@ def main(compare_method: str, theta, human_seed: int, compare_window,
                 Util.export_XML_init_file(traces_real[i], tmp_scenario_path)
                 sim_client.update_params({"init_scenario_path": tmp_scenario_path})
                 sim_client.load_and_init()
-                sim_client.run_to(time_real_list[i])
+                sim_client.run_to(time_real_list[i], silence=True)
                 deviation_record.append(time_real_list[i])
             sim_client.step()
     except Exception as e:
