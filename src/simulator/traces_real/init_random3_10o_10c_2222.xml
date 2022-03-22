@@ -1,0 +1,115 @@
+<?xml version="1.0" ?>
+<scenario time="1">
+    <cameras>
+        <camera id="0" x="29.04" y="8.3">
+            <objects>
+                <object id="7" x="28.45" y="13.51" angle="0" is_important="false"/>
+            </objects>
+            <messages/>
+        </camera>
+        <camera id="1" x="15.29" y="49.35">
+            <objects>
+                <object id="2" x="7.52" y="49.77" angle="180" is_important="true"/>
+                <object id="9" x="21.82" y="42.23" angle="180" is_important="false"/>
+            </objects>
+            <messages/>
+        </camera>
+        <camera id="2" x="46.24" y="19.67">
+            <objects>
+                <object id="3" x="48.09" y="18.48" angle="90" is_important="false"/>
+            </objects>
+            <messages/>
+        </camera>
+        <camera id="3" x="3.04" y="16.38">
+            <objects/>
+            <messages/>
+        </camera>
+        <camera id="4" x="18.1" y="18.51">
+            <objects/>
+            <messages/>
+        </camera>
+        <camera id="5" x="28.49" y="36.64">
+            <objects>
+                <object id="9" x="21.82" y="42.23" angle="180" is_important="false"/>
+            </objects>
+            <messages/>
+        </camera>
+        <camera id="6" x="36.34" y="7.9">
+            <objects>
+                <object id="1" x="37.85" y="1.12" angle="360" is_important="false"/>
+                <object id="7" x="28.45" y="13.51" angle="0" is_important="false"/>
+            </objects>
+            <messages/>
+        </camera>
+        <camera id="7" x="47.52" y="26.19">
+            <objects>
+                <object id="3" x="48.09" y="18.48" angle="90" is_important="false"/>
+                <object id="5" x="43.15" y="30.75" angle="360" is_important="false"/>
+            </objects>
+            <messages/>
+        </camera>
+        <camera id="8" x="40.16" y="29.88">
+            <objects>
+                <object id="5" x="43.15" y="30.75" angle="360" is_important="false"/>
+            </objects>
+            <messages/>
+        </camera>
+        <camera id="9" x="4.11" y="7.13">
+            <objects/>
+            <messages/>
+        </camera>
+    </cameras>
+    <graph>
+        <edge source_id="0" target_id="1" strength="0.0"/>
+        <edge source_id="0" target_id="2" strength="0.0"/>
+        <edge source_id="0" target_id="3" strength="0.0"/>
+        <edge source_id="0" target_id="4" strength="0.0"/>
+        <edge source_id="0" target_id="5" strength="0.0"/>
+        <edge source_id="0" target_id="6" strength="0.0"/>
+        <edge source_id="0" target_id="7" strength="0.0"/>
+        <edge source_id="0" target_id="8" strength="0.0"/>
+        <edge source_id="0" target_id="9" strength="0.0"/>
+        <edge source_id="1" target_id="2" strength="0.0"/>
+        <edge source_id="1" target_id="3" strength="0.0"/>
+        <edge source_id="1" target_id="4" strength="0.0"/>
+        <edge source_id="1" target_id="5" strength="0.0"/>
+        <edge source_id="1" target_id="6" strength="0.0"/>
+        <edge source_id="1" target_id="7" strength="0.0"/>
+        <edge source_id="1" target_id="8" strength="0.0"/>
+        <edge source_id="1" target_id="9" strength="0.0"/>
+        <edge source_id="2" target_id="3" strength="0.0"/>
+        <edge source_id="2" target_id="4" strength="0.0"/>
+        <edge source_id="2" target_id="5" strength="0.0"/>
+        <edge source_id="2" target_id="6" strength="0.0"/>
+        <edge source_id="2" target_id="7" strength="0.0"/>
+        <edge source_id="2" target_id="8" strength="0.0"/>
+        <edge source_id="2" target_id="9" strength="0.0"/>
+        <edge source_id="3" target_id="4" strength="0.0"/>
+        <edge source_id="3" target_id="5" strength="0.0"/>
+        <edge source_id="3" target_id="6" strength="0.0"/>
+        <edge source_id="3" target_id="7" strength="0.0"/>
+        <edge source_id="3" target_id="8" strength="0.0"/>
+        <edge source_id="3" target_id="9" strength="0.0"/>
+        <edge source_id="4" target_id="5" strength="0.0"/>
+        <edge source_id="4" target_id="6" strength="0.0"/>
+        <edge source_id="4" target_id="7" strength="0.0"/>
+        <edge source_id="4" target_id="8" strength="0.0"/>
+        <edge source_id="4" target_id="9" strength="0.0"/>
+        <edge source_id="5" target_id="6" strength="0.0"/>
+        <edge source_id="5" target_id="7" strength="0.0"/>
+        <edge source_id="5" target_id="8" strength="0.0"/>
+        <edge source_id="5" target_id="9" strength="0.0"/>
+        <edge source_id="6" target_id="7" strength="0.0"/>
+        <edge source_id="6" target_id="8" strength="0.0"/>
+        <edge source_id="6" target_id="9" strength="0.0"/>
+        <edge source_id="7" target_id="8" strength="0.0"/>
+        <edge source_id="7" target_id="9" strength="0.0"/>
+        <edge source_id="8" target_id="9" strength="0.0"/>
+    </graph>
+    <uncovered_objects>
+        <object id="0" x="1.94" y="50.0" angle="360" is_important="true"/>
+        <object id="4" x="29.74" y="25.25" angle="90" is_important="true"/>
+        <object id="6" x="3.37" y="41.09" angle="360" is_important="true"/>
+        <object id="8" x="28.96" y="23.91" angle="270" is_important="true"/>
+    </uncovered_objects>
+</scenario>

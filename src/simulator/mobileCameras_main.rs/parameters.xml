@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='utf-8'?>
+<parameters>
+					<parameter name="randomSeed" displayName="Default Random Seed" type="int" defaultValue="67890" isReadOnly="false" converter="repast.simphony.parameter.StringConverterFactory$IntConverter" />
+				<parameter name="camera_count" displayName="Camera Count" type="int" defaultValue="10" isReadOnly="false" converter="repast.simphony.parameter.StringConverterFactory$IntConverter" />
+				<parameter name="init_scenario_path" displayName="Init Scenario File Path" type="java.lang.String" defaultValue="../simulator/traces_real/init_random3_10o_10c_2222.xml" isReadOnly="false" converter="repast.simphony.parameter.StringConverterFactory$StringStringConverter" />
+				<parameter name="human_position_uncertainty" displayName="Human Position Uncertainty" type="double" defaultValue="0.0" isReadOnly="false" converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter" />
+				<parameter name="human_count" displayName="Human Count" type="int" defaultValue="10" isReadOnly="false" converter="repast.simphony.parameter.StringConverterFactory$IntConverter" />
+				<parameter name="output_trace_path" displayName="Output Trace File Path" type="java.lang.String" defaultValue="../../output/2022-03-14--18-07-09-534/trace/output_main.txt" isReadOnly="false" converter="repast.simphony.parameter.StringConverterFactory$StringStringConverter" />
+				<parameter name="update_knowledge" displayName="Update Knowledge from Init File?" type="boolean" defaultValue="true" isReadOnly="false" converter="repast.simphony.parameter.StringConverterFactory$BooleanConverter" />
+				<parameter name="user_seed" displayName="User Provided Seed for Human" type="int" defaultValue="100" isReadOnly="false" converter="repast.simphony.parameter.StringConverterFactory$IntConverter" />
+		</parameters>

@@ -1,0 +1,14 @@
+name: mobileCameras
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.9
+  - numpy
+  - pandas
+  - matplotlib 
+  - py4j
+  - pyyaml
+  - pygmo
+  - jupyterlab
+  - scipy

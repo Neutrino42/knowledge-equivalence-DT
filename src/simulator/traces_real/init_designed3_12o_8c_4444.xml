@@ -1,0 +1,90 @@
+<?xml version="1.0" ?>
+<scenario time="1">
+    <cameras>
+        <camera id="0" x="34.91" y="43.38">
+            <objects/>
+            <messages/>
+        </camera>
+        <camera id="1" x="23.58" y="23.54">
+            <objects>
+                <object id="0" x="27.08" y="14.58" angle="90" is_important="true"/>
+                <object id="2" x="31.25" y="18.75" angle="90" is_important="true"/>
+            </objects>
+            <messages/>
+        </camera>
+        <camera id="2" x="35.95" y="30.7">
+            <objects>
+                <object id="4" x="35.42" y="22.92" angle="90" is_important="true"/>
+                <object id="6" x="39.58" y="27.08" angle="90" is_important="true"/>
+                <object id="8" x="43.75" y="31.25" angle="90" is_important="true"/>
+            </objects>
+            <messages/>
+        </camera>
+        <camera id="3" x="47.27" y="47.49">
+            <objects/>
+            <messages/>
+        </camera>
+        <camera id="4" x="4.94" y="40.27">
+            <objects>
+                <object id="3" x="6.25" y="31.25" angle="0" is_important="false"/>
+                <object id="5" x="10.42" y="35.42" angle="0" is_important="false"/>
+                <object id="7" x="14.58" y="39.58" angle="0" is_important="false"/>
+            </objects>
+            <messages/>
+        </camera>
+        <camera id="5" x="29.58" y="49.06">
+            <objects>
+                <object id="11" x="22.92" y="47.92" angle="0" is_important="false"/>
+            </objects>
+            <messages/>
+        </camera>
+        <camera id="6" x="28.72" y="10.39">
+            <objects>
+                <object id="0" x="27.08" y="14.58" angle="90" is_important="true"/>
+                <object id="2" x="31.25" y="18.75" angle="90" is_important="true"/>
+            </objects>
+            <messages/>
+        </camera>
+        <camera id="7" x="41.71" y="39.42">
+            <objects>
+                <object id="8" x="43.75" y="31.25" angle="90" is_important="true"/>
+                <object id="10" x="47.92" y="35.42" angle="90" is_important="true"/>
+            </objects>
+            <messages/>
+        </camera>
+    </cameras>
+    <graph>
+        <edge source_id="0" target_id="1" strength="0.0"/>
+        <edge source_id="0" target_id="2" strength="0.0"/>
+        <edge source_id="0" target_id="3" strength="0.0"/>
+        <edge source_id="0" target_id="4" strength="0.0"/>
+        <edge source_id="0" target_id="5" strength="0.0"/>
+        <edge source_id="0" target_id="6" strength="0.0"/>
+        <edge source_id="0" target_id="7" strength="0.0"/>
+        <edge source_id="1" target_id="2" strength="0.0"/>
+        <edge source_id="1" target_id="3" strength="0.0"/>
+        <edge source_id="1" target_id="4" strength="0.0"/>
+        <edge source_id="1" target_id="5" strength="0.0"/>
+        <edge source_id="1" target_id="6" strength="0.0"/>
+        <edge source_id="1" target_id="7" strength="0.0"/>
+        <edge source_id="2" target_id="3" strength="0.0"/>
+        <edge source_id="2" target_id="4" strength="0.0"/>
+        <edge source_id="2" target_id="5" strength="0.0"/>
+        <edge source_id="2" target_id="6" strength="0.0"/>
+        <edge source_id="2" target_id="7" strength="0.0"/>
+        <edge source_id="3" target_id="4" strength="0.0"/>
+        <edge source_id="3" target_id="5" strength="0.0"/>
+        <edge source_id="3" target_id="6" strength="0.0"/>
+        <edge source_id="3" target_id="7" strength="0.0"/>
+        <edge source_id="4" target_id="5" strength="0.0"/>
+        <edge source_id="4" target_id="6" strength="0.0"/>
+        <edge source_id="4" target_id="7" strength="0.0"/>
+        <edge source_id="5" target_id="6" strength="0.0"/>
+        <edge source_id="5" target_id="7" strength="0.0"/>
+        <edge source_id="6" target_id="7" strength="0.0"/>
+    </graph>
+    <uncovered_objects>
+        <object id="1" x="2.08" y="27.08" angle="0" is_important="false"/>
+        <object id="9" x="18.75" y="43.75" angle="0" is_important="false"/>
+    </uncovered_objects>
+</scenario>
