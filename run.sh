@@ -16,7 +16,7 @@ function run() {
 
   echo ${compare_method}
 
-  for threshold in 5 10 15 20
+  for threshold in 20
   do
     for seed in 100
     do
@@ -26,7 +26,7 @@ function run() {
       --mount source=${result_vol},target=/experiments/runner/result \
       --mount source=${trace_vol},target=/experiments/simulator/trace/prediction \
       --name ${compare_method}_t${threshold}_s${seed} \
-      ${docker_image}:${tag} -t $threshold -s $seed -c $compare_method -w $compare_window &
+      ${docker_image}:${tag} -t $threshold -s $seed -c $compare_method -w $compare_window -u -q &
     done
   done
 }

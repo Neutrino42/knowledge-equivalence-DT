@@ -1,7 +1,7 @@
 import getopt
 import os
 import sys
-
+import copy
 import numpy as np
 
 import Loader
@@ -13,7 +13,7 @@ from Config import Config
 
 
 def main(compare_method: str, theta, human_seed: int, compare_window,
-         tau=0, update_state_only=False, estimation_uncertainty=0.0):
+         tau=0, update_state_only=False, estimation_uncertainty=0.0, seed=3333, update_mode=None):
     """
 
     :param tau:
@@ -23,9 +23,9 @@ def main(compare_method: str, theta, human_seed: int, compare_window,
     :param human_seed:
     :param verbose:
     :param k: for k-coverage
+    :param update_mode: "clear_knowledge" or "keep_knowledge"
     :return:
     """
-    seed = 3333
 
     # load configuration
     config = Config("config.yaml").data
@@ -44,6 +44,7 @@ def main(compare_method: str, theta, human_seed: int, compare_window,
     # initialize the simulation client
     # TODO: auto export init xml. Do not use both trace file and init xml file to initialise the simulator
     params = dict(
+        randomSeed=seed,
         human_count=Loader.get_num_objs(traces_real[0]),
         camera_count=Loader.get_num_cams(traces_real[0]),
         update_knowledge=str(not update_state_only).lower(),
@@ -52,6 +53,7 @@ def main(compare_method: str, theta, human_seed: int, compare_window,
         human_position_uncertainty=float(estimation_uncertainty),  # by default 0.0
         user_seed=human_seed
     )
+    print(params)
     sim_client = Client(config["repast_rs"])
     sim_client.update_params(params)
     sim_client.load_and_init()
@@ -67,31 +69,45 @@ def main(compare_method: str, theta, human_seed: int, compare_window,
     # record for deviation time step
     deviation_record = []
     traces_pre = []
+    distances_action = np.zeros(shape=(len(time_real_list), 2))  # depends on how many times we compare in the below
     try:
         sim_client.step()
+        traces_pre += sim_client.get_latest_trace()
         # TODO: 注意trace里第一秒是初始化，第二秒才开始sense-think-act-SEND_DATA
         for i in range(len(time_real_list)-1):
-            # read prediction traces:
-            traces_pre += sim_client.get_latest_trace()
-
             # compare to calculate deviation
             dists = comparator.compare(
                 traces_pre[max(0, i+1-compare_window): i+1],
                 traces_real[max(0, i+1-compare_window): i+1]
             )
 
+            distances_action[i, :] = [time_real_list[i], np.mean(dists)]
             if np.mean(dists) > theta:
                 # 1. export to a new init_scenario file
                 # 2. update parameters.xml to point to that file
                 # 3. reload simulator
                 # 4. allow the simulator to run to the new starting time step
                 tmp_scenario_path = os.path.join(config["out_scenario_dir"], 'init_scenario{}.xml'.format(time_real_list[i]))
-                Util.export_XML_init_file(traces_real[i], tmp_scenario_path)
+                if update_mode == "clear_knowledge":
+                    print("clear knowledge when update")
+                    state_tmp = copy.deepcopy(traces_real[i])
+                    for g in state_tmp["graph"]:
+                        g['strength'] = 0.0
+                    Util.export_XML_init_file(state_tmp, tmp_scenario_path)
+                elif update_mode == "keep_knowledge":
+                    print("keep knowledge unchanged when update")
+                    state_tmp = copy.deepcopy(traces_real[i])
+                    graph_tmp = copy.deepcopy(traces_pre[i]["graph"])
+                    state_tmp["graph"] = graph_tmp
+                    Util.export_XML_init_file(state_tmp, tmp_scenario_path)
+                else:
+                    Util.export_XML_init_file(traces_real[i], tmp_scenario_path)
                 sim_client.update_params({"init_scenario_path": tmp_scenario_path})
                 sim_client.load_and_init()
                 sim_client.run_to(time_real_list[i], silence=True)
                 deviation_record.append(time_real_list[i])
             sim_client.step()
+            traces_pre += sim_client.get_latest_trace()
     except Exception as e:
         sim_client.terminate()
         sim_server.terminate()
@@ -103,15 +119,24 @@ def main(compare_method: str, theta, human_seed: int, compare_window,
     sim_client.update_params({"init_scenario_path": config["init_scenario_path"]})  # restore to default init_scenario
     sim_server.terminate()
 
+    # Calculate utility deviation
+    comparator_util = Comparator("utility")
+    distances_util = comparator_util.compare(traces_pre, traces_real)
+    distances_util = np.vstack([time_real_list, distances_util]).transpose()
+
     # write deviation record to file
     dev_file = os.path.join(config["out_statistics"], 'deviation_record.csv')
     os.makedirs(os.path.dirname(dev_file), exist_ok=True)
     with open(dev_file, 'w+') as f:
         f.write(','.join(map(str, deviation_record)) + '\n')
+    np.savetxt(os.path.join(config["out_statistics"], 'distances_{}.csv'.format(compare_method)),
+               distances_action, delimiter=',', fmt="%f")
+    np.savetxt(os.path.join(config["out_statistics"], 'distances_utility.csv'),
+               distances_util, delimiter=',', fmt="%f")
 
 
 if __name__ == '__main__':
-    main("interaction", 30, 100, 1, estimation_uncertainty=5.0)
+    main("interaction", 300, 999, 1, estimation_uncertainty=0.0)
     exit(0)
 
     # default values

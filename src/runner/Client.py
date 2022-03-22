@@ -18,7 +18,7 @@ class Client(object):
             self.__rs_dir = rs_dir
         else:
             self.__rs_dir = "/Users/Nann/eclipse-workspace/mobileCameras/mobileCameras.rs"
-        for i in range(5):
+        for i in range(10):
             try:
                 if self.__port is not None:
                     self.__gateway = JavaGateway(gateway_parameters=GatewayParameters(port=self.__port))
@@ -36,7 +36,7 @@ class Client(object):
     def __load(self):
         try:
             self.__runner.load(self.__rs_dir)
-            print("loaded: " + self.__rs_dir)
+            # print("loaded: " + self.__rs_dir)
         except:
             print("ERROR: load config file failed, please check your file path")
             exit(-2)
@@ -53,6 +53,7 @@ class Client(object):
 
     def __run_init(self):
         self.__runner.runInitialize()
+        self.__runner.setOutputStream()
 
     def load_and_init(self):
         try:
@@ -84,6 +85,7 @@ class Client(object):
         self.__runner.stop()
         self.__runner.cleanUpRun()
         self.__runner.cleanUpBatch()
+        self.__gateway.shutdown()
 
     def get_tick_count(self):
         return self.__gateway.jvm.repast.simphony.engine.environment.RunEnvironment \

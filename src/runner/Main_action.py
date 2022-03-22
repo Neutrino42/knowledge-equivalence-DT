@@ -15,6 +15,7 @@ import copy
 PORT1 = 25335
 PORT2 = 25336
 
+
 def main(compare_method: str, theta, human_seed: int, compare_window,
          tau=0, update_state_only=False, estimation_uncertainty=0.0):
     """
@@ -78,7 +79,7 @@ def main(compare_method: str, theta, human_seed: int, compare_window,
 
     deviation_record = []
     traces_pre = []
-    all_distances = np.zeros(shape=(len(time_real_list)-2, 2))  # depends on how many times we compare in the below
+    distances_action = np.zeros(shape=(len(time_real_list)-2, 2))  # depends on how many times we compare in the below
     try:
         # The first time step, initialisation
         sim_client.step()
@@ -99,9 +100,12 @@ def main(compare_method: str, theta, human_seed: int, compare_window,
                 # 2. (re)load sim_client2
                 # 3. set sim_client2 to start from last time step t=1
                 # 4. run sim_client2.step() for one tick --> t=2
-                # 5. get actions (at t=2) from sim_client2
-                tmp_state = copy.deepcopy(traces_real[i-1])
-                tmp_state["graph"] = traces_pre[i-1]["graph"]
+                # 5. get actions (at t=2) from sim_client
+                if time_real_list[i - 1] in deviation_record:  # check whether there is an update at previous time step
+                    tmp_state = copy.deepcopy(traces_real[i - 1])
+                else:
+                    tmp_state = copy.deepcopy(traces_real[i - 1])
+                    tmp_state["graph"] = traces_pre[i - 1]["graph"]
                 # TODO: this tmp_state is just a workaround, if we want to run WIA for more time steps,
                 # TODO: ... we need to carefully think about how to update the state and estimate the uncovered objects
                 Util.export_XML_init_file(tmp_state, wia_scenario_path)
@@ -113,7 +117,7 @@ def main(compare_method: str, theta, human_seed: int, compare_window,
                 # -- read real trace and compare --
                 # (at the end of current time step t=2)
                 dists = comparator.compare(traces_wia, traces_real[i])
-                all_distances[i-1, :] = [time_real_list[i], np.mean(dists)]
+                distances_action[i-1, :] = [time_real_list[i], np.mean(dists)]
                 if np.mean(dists) > theta:
                     # -- update the MAIN simulator --
                     # 1. export to a new init_scenario file
@@ -147,14 +151,21 @@ def main(compare_method: str, theta, human_seed: int, compare_window,
     sim_server.terminate()
     sim_server2.terminate()
 
+    # Calculate utility deviation
+    comparator_util = Comparator("utility")
+    distances_util = comparator_util.compare(traces_pre, traces_real)
+    distances_util = np.vstack([time_real_list, distances_util]).transpose()
+
     # write deviation record to file
     dev_file = os.path.join(config["out_statistics"], 'deviation_record.csv')
     os.makedirs(os.path.dirname(dev_file), exist_ok=True)
     with open(dev_file, 'w+') as f:
         f.write(','.join(map(str, deviation_record)) + '\n')
     np.savetxt(os.path.join(config["out_statistics"], 'distances_{}.csv'.format(compare_method)),
-               all_distances, delimiter=',', fmt="%f")
+               distances_action, delimiter=',', fmt="%f")
+    np.savetxt(os.path.join(config["out_statistics"], 'distances_utility.csv'),
+               distances_util, delimiter=',', fmt="%f")
 
 
 if __name__ == '__main__':
-    main("action", 0.2, 100, 1, estimation_uncertainty=5.0)
+    main("action", 0.1, 100, 1, estimation_uncertainty=5.0)

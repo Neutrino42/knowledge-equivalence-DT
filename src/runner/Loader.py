@@ -12,6 +12,14 @@ def get_all_covered_objects(state):
     return cov_objs
 
 
+def get_all_objects(state):
+    covered_objs = get_all_covered_objects(state)
+    uncovered_objs = {}
+    for obj_id, obj_content in state["objects"].items():
+        uncovered_objs[str(obj_id)] = [obj_content["x"], obj_content["y"]]
+    return covered_objs | uncovered_objs  # merge two dictionaries, python 3.9 only.
+
+
 def get_num_cams(state):
     return len(state["cameras"])
 
@@ -32,6 +40,20 @@ class TraceLoader(object):
 
     def set_trace_path(self, trace_path):
         self.__trace_path = trace_path
+
+    def read_trace(self, trace_raw=None):
+        """
+
+        :param trace_raw: raw trace as a string
+        :return:
+        """
+        if trace_raw is None:
+            with open(self.__trace_path, 'r') as f:
+                tmp_traces = self._preprocess_trace(f)
+                return [self._parse_state_for_each_timestep(_state) for _state in tmp_traces]
+        else:
+            tmp_traces = self._preprocess_trace(io.StringIO(trace_raw))
+            return [self._parse_state_for_each_timestep(_state) for _state in tmp_traces]
 
     def _parse_state_for_each_timestep(self, trace):
         """
@@ -123,15 +145,6 @@ class TraceLoader(object):
                                             angle=int(uncovered_obj_xml[3]), is_important=uncovered_obj_xml[4],
                                             duration=int(uncovered_obj_xml[5]))
         return state
-
-    def read_trace(self, my_string=None):
-        if my_string is None:
-            with open(self.__trace_path, 'r') as f:
-                tmp_traces = self._preprocess_trace(f)
-                return [self._parse_state_for_each_timestep(_state) for _state in tmp_traces]
-        else:
-            tmp_traces = self._preprocess_trace(io.StringIO(my_string))
-            return [self._parse_state_for_each_timestep(_state) for _state in tmp_traces]
 
     def _preprocess_trace(self, f):
         lines = f.readlines()

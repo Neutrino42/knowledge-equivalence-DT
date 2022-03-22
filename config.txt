@@ -1,5 +1,6 @@
-JAR_VERSION="04ffa0"
-TAG="designed1_deviated_state"
+JAR_VERSION="ef8d28"
+TRACE_FILE="sample_designed2_12o-8c-1111.txt"
+TAG="designed2_unknown"
 IMAGE="nan42/eval"
 TRACE_VOL="trace"
 RESULT_VOL="result"

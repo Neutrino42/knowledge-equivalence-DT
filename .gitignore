@@ -1,10 +1,11 @@
-/out
+/out*
 /result
 /others
 __pycache__
 /.idea
 /evaluation_1
 /fig
+/env
 
 *.jar
 *.txt
