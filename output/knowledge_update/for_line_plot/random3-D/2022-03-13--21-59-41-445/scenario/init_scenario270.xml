@@ -1,0 +1,134 @@
+<?xml version="1.0" ?>
+<scenario time="270">
+    <cameras>
+        <camera id="0" x="31.1" y="31.69">
+            <objects>
+                <object id="0" x="24.94" y="35.91" angle="180" is_important="false"/>
+                <object id="2" x="32.52" y="35.67" angle="180" is_important="false"/>
+            </objects>
+            <messages/>
+        </camera>
+        <camera id="1" x="10.78" y="2.85">
+            <objects>
+                <object id="4" x="15.64" y="0.25" angle="90" is_important="false"/>
+            </objects>
+            <messages/>
+        </camera>
+        <camera id="2" x="36.67" y="7.9">
+            <objects>
+                <object id="3" x="33.99" y="7.48" angle="270" is_important="true"/>
+            </objects>
+            <messages/>
+        </camera>
+        <camera id="3" x="13.27" y="1.6">
+            <objects>
+                <object id="4" x="15.64" y="0.25" angle="90" is_important="false"/>
+            </objects>
+            <messages/>
+        </camera>
+        <camera id="4" x="18.19" y="5.58">
+            <objects>
+                <object id="4" x="15.64" y="0.25" angle="90" is_important="false"/>
+            </objects>
+            <messages/>
+        </camera>
+        <camera id="5" x="16.2" y="3.0">
+            <objects>
+                <object id="4" x="15.64" y="0.25" angle="90" is_important="false"/>
+            </objects>
+            <messages>
+                <message time="266" camera_id="0" object_id="0"/>
+                <message time="266" camera_id="8" object_id="0"/>
+                <message time="267" camera_id="0" object_id="0"/>
+                <message time="267" camera_id="8" object_id="0"/>
+                <message time="268" camera_id="0" object_id="0"/>
+                <message time="268" camera_id="8" object_id="0"/>
+                <message time="269" camera_id="0" object_id="0"/>
+                <message time="269" camera_id="8" object_id="0"/>
+                <message time="270" camera_id="2" object_id="3"/>
+            </messages>
+        </camera>
+        <camera id="6" x="20.69" y="1.23">
+            <objects>
+                <object id="4" x="15.64" y="0.25" angle="90" is_important="false"/>
+            </objects>
+            <messages/>
+        </camera>
+        <camera id="7" x="20.8" y="3.02">
+            <objects>
+                <object id="4" x="15.64" y="0.25" angle="90" is_important="false"/>
+            </objects>
+            <messages>
+                <message time="270" camera_id="2" object_id="3"/>
+            </messages>
+        </camera>
+        <camera id="8" x="35.26" y="39.75">
+            <objects>
+                <object id="0" x="24.94" y="35.91" angle="180" is_important="false"/>
+                <object id="2" x="32.52" y="35.67" angle="180" is_important="false"/>
+            </objects>
+            <messages/>
+        </camera>
+        <camera id="9" x="13.26" y="6.91">
+            <objects>
+                <object id="4" x="15.64" y="0.25" angle="90" is_important="false"/>
+            </objects>
+            <messages/>
+        </camera>
+    </cameras>
+    <graph>
+        <edge source_id="0" target_id="1" strength="0.168639"/>
+        <edge source_id="0" target_id="2" strength="0.578748"/>
+        <edge source_id="0" target_id="3" strength="0.168637"/>
+        <edge source_id="0" target_id="4" strength="0.578829"/>
+        <edge source_id="0" target_id="5" strength="0.578899"/>
+        <edge source_id="0" target_id="6" strength="0.578821"/>
+        <edge source_id="0" target_id="7" strength="0.578789"/>
+        <edge source_id="0" target_id="8" strength="23.518659"/>
+        <edge source_id="0" target_id="9" strength="0.169392"/>
+        <edge source_id="1" target_id="2" strength="5.2e-05"/>
+        <edge source_id="1" target_id="3" strength="12.250696"/>
+        <edge source_id="1" target_id="4" strength="9.654287"/>
+        <edge source_id="1" target_id="5" strength="9.9651"/>
+        <edge source_id="1" target_id="6" strength="9.430573"/>
+        <edge source_id="1" target_id="7" strength="8.784306"/>
+        <edge source_id="1" target_id="8" strength="0.064615"/>
+        <edge source_id="1" target_id="9" strength="12.054279"/>
+        <edge source_id="2" target_id="3" strength="5.2e-05"/>
+        <edge source_id="2" target_id="4" strength="0.578784"/>
+        <edge source_id="2" target_id="5" strength="0.57881"/>
+        <edge source_id="2" target_id="6" strength="0.578784"/>
+        <edge source_id="2" target_id="7" strength="0.578936"/>
+        <edge source_id="2" target_id="8" strength="0.578744"/>
+        <edge source_id="2" target_id="9" strength="0.000799"/>
+        <edge source_id="3" target_id="4" strength="9.654287"/>
+        <edge source_id="3" target_id="5" strength="9.965095"/>
+        <edge source_id="3" target_id="6" strength="9.430573"/>
+        <edge source_id="3" target_id="7" strength="8.7843"/>
+        <edge source_id="3" target_id="8" strength="0.064613"/>
+        <edge source_id="3" target_id="9" strength="12.052919"/>
+        <edge source_id="4" target_id="5" strength="10.926264"/>
+        <edge source_id="4" target_id="6" strength="10.765929"/>
+        <edge source_id="4" target_id="7" strength="9.637366"/>
+        <edge source_id="4" target_id="8" strength="0.637672"/>
+        <edge source_id="4" target_id="9" strength="9.65504"/>
+        <edge source_id="5" target_id="6" strength="10.683087"/>
+        <edge source_id="5" target_id="7" strength="9.689753"/>
+        <edge source_id="5" target_id="8" strength="0.690075"/>
+        <edge source_id="5" target_id="9" strength="9.965844"/>
+        <edge source_id="6" target_id="7" strength="9.617911"/>
+        <edge source_id="6" target_id="8" strength="0.689999"/>
+        <edge source_id="6" target_id="9" strength="9.431325"/>
+        <edge source_id="7" target_id="8" strength="0.689269"/>
+        <edge source_id="7" target_id="9" strength="8.78505"/>
+        <edge source_id="8" target_id="9" strength="0.065367"/>
+    </graph>
+    <uncovered_objects>
+        <object id="1" x="12.85" y="15.22" angle="0" is_important="true"/>
+        <object id="5" x="18.15" y="44.85" angle="0" is_important="true"/>
+        <object id="6" x="22.37" y="44.81" angle="180" is_important="false"/>
+        <object id="7" x="3.45" y="27.61" angle="0" is_important="true"/>
+        <object id="8" x="43.06" y="48.91" angle="270" is_important="false"/>
+        <object id="9" x="46.82" y="28.13" angle="180" is_important="true"/>
+    </uncovered_objects>
+</scenario>

@@ -1,0 +1,11 @@
+compare_method: position
+compare_window: 1
+duration: 100
+estimation_uncertainty: 0.0
+human_seed: 100
+init_time: 270
+seed: 2222
+tau: 0
+update_mode: clear_knowledge
+update_state_only: false
+update_time: 320
