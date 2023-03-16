@@ -8,7 +8,7 @@ This repository contains the source code and data that is used in the following 
 
 The repository also contains a simulator as a `.jar` file, whose source code can be found in https://github.com/digitwins/mobile-cameras-repast
 
-The directory `output` only contains the statistics of simulation. The raw data of simulation traces can be found at: https://tinyurl.com/knowledge-equivalence-DT (redirects to Google Drive)
+The directory `output` contains the simulation results. However, due to the storage limitation of GitHub, it now only contains the statistics of simulation. The raw data of all simulation traces can be found at: https://tinyurl.com/knowledge-equivalence-DT (redirects to Google Drive)
 
 
 ## Run
